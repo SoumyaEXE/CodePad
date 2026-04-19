@@ -51,6 +51,28 @@
 
 ---
 
+## 🧩 Format Code — Implementation Notes
+
+The **Format** button is fully functional for JavaScript and TypeScript using Prettier (browser standalone).
+
+For Python, C, C++, and Java — full AST-based formatting was attempted but not possible due to the following technical constraints:
+
+1. **Piston API (emkc.org)**: Initially used to run Black formatter for Python server-side. Returned 401 after free tier changes. Removed to avoid runtime failures.
+2. **Prettier**: Only supports JS/TS/HTML/CSS. No support for systems languages by design.
+3. **WebAssembly-based formatters** (e.g. clang-format via WASM): Bundle size exceeds 40MB, not suitable for a static web deployment.
+4. **Server-side formatting**: All server-side formatting solutions require a backend — this project is a fully static frontend deployment with no server.
+
+### Current behavior for unsupported languages:
+- Normalizes indentation (tabs → spaces)
+- Removes trailing whitespace  
+- Collapses excessive blank lines
+- Basic brace-based indent correction for C-style languages
+
+> [!NOTE]
+> This is a known limitation of browser-only code editors without a backend formatting service.
+
+---
+
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
