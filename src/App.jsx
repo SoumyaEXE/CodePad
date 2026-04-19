@@ -433,6 +433,27 @@ export default function App() {
     setActivePanel((prev) => prev ? null : 'explorer');
   }, []);
 
+  /* ── full screen logic ───────────────────────── */
+  const [isFullScreen, setIsFullScreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
+  }, []);
+
+  const toggleFullScreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
   /* ── mobile detection + tab ──────────────────── */
   const isMobile = useMediaQuery('(max-width:768px)');
   const [mobileTab, setMobileTab] = useState('code');
@@ -779,6 +800,8 @@ export default function App() {
           onToggleSidebar={toggleSidebar}
           onNewProject={() => setNewProjectOpen(true)}
           onSettings={() => setSettingsModalOpen(true)}
+          isFullScreen={isFullScreen}
+          onToggleFullScreen={toggleFullScreen}
           activeFile={activeFile}
           activeContent={activeContent}
           files={files}

@@ -8,6 +8,8 @@ import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import DataObjectOutlinedIcon from '@mui/icons-material/DataObjectOutlined';
+import FullscreenOutlinedIcon from '@mui/icons-material/FullscreenOutlined';
+import FullscreenExitOutlinedIcon from '@mui/icons-material/FullscreenExitOutlined';
 
 export default function Navbar({
   darkMode,
@@ -18,6 +20,8 @@ export default function Navbar({
   onSettings,
   aiSidebarOpen,
   onToggleAiSidebar,
+  isFullScreen,
+  onToggleFullScreen,
   activeFile,
   activeContent,
   files,
@@ -208,6 +212,11 @@ export default function Navbar({
           <Tooltip title={darkMode ? 'Light mode' : 'Dark mode'} arrow>
             <IconButton id="theme-toggle" onClick={onToggleDarkMode} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
               {darkMode ? <WbSunnyOutlinedIcon sx={{ fontSize: 19 }} /> : <DarkModeOutlinedIcon sx={{ fontSize: 19 }} />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={isFullScreen ? "Exit full screen" : "Full screen"} arrow>
+            <IconButton onClick={onToggleFullScreen} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
+              {isFullScreen ? <FullscreenExitOutlinedIcon sx={{ fontSize: 20 }} /> : <FullscreenOutlinedIcon sx={{ fontSize: 20 }} />}
             </IconButton>
           </Tooltip>
           <Tooltip title="Settings" arrow>
