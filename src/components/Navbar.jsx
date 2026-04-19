@@ -30,6 +30,7 @@ export default function Navbar({
   isRunning,
   showOutput,
   onToggleOutput,
+  onFormat
 }) {
   const [snackMsg, setSnackMsg] = useState('');
 
@@ -162,16 +163,10 @@ export default function Navbar({
         {/* Right actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            {/* <Button
+            <Button
               size="small"
               variant="outlined"
-              onClick={() => {
-                if (editorRef?.current) {
-                  editorRef.current
-                    .getAction("editor.action.formatDocument")
-                    .run();
-                }
-              }}
+              onClick={onFormat}
               sx={{
                 height: 26,
                 fontSize: 12,
@@ -185,7 +180,7 @@ export default function Navbar({
               }}
             >
               Format
-            </Button> */}
+            </Button>
           </Box>
 
           <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.5, opacity: 0.5 }} />
@@ -235,7 +230,7 @@ export default function Navbar({
           sx: {
             bgcolor: 'background.paper', color: 'text.primary',
             border: '1px solid', borderColor: 'divider', borderRadius: '8px',
-            fontSize: 12, fontWeight: 500, boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            fontSize: 12, fontWeight: 500, boxShadow: '0 4px 166 rgba(0,0,0,0.25)',
             minWidth: 'auto', py: 0.25, '& .MuiSnackbarContent-message': { py: 0 },
           },
         }}

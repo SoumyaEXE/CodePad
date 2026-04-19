@@ -459,6 +459,7 @@ export default function App() {
   const isMobile = useMediaQuery('(max-width:768px)');
   const [mobileTab, setMobileTab] = useState('code');
   const editorRef = useRef(null);
+  const formatRef = useRef(null);
 
   /* ── resizable panel widths ────────────────────── */
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -817,6 +818,7 @@ export default function App() {
           files={files}
           isMobile={isMobile}
           editorRef={editorRef}
+          onFormat={() => formatRef.current?.formatCode()}
         />
 
         {/* ═══ MOBILE LAYOUT ═══ */}
@@ -873,6 +875,7 @@ export default function App() {
                     fileName={activeFile ? activeFile.split('/').pop() : ''}
                     darkMode={darkMode}
                     onChange={handleContentChange}
+                    formatRef={formatRef}
                   />
                 </Box>
               )}
@@ -990,6 +993,7 @@ export default function App() {
                       fileName={activeFile ? activeFile.split('/').pop() : ''}
                       darkMode={darkMode}
                       onChange={handleContentChange}
+                      formatRef={formatRef}
                     />
                   </Box>
 

@@ -1,8 +1,11 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { Box, Fade, CircularProgress } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
+import * as prettier from "prettier/standalone";
+import * as parserBabel from "prettier/plugins/babel";
+import * as prettierEstree from "prettier/plugins/estree";
 
-const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange }, ref) {
+const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange, formatRef }, ref) {
   const iframeRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastCodeRef = useRef(code);
@@ -10,10 +13,109 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   const [currentSrc, setCurrentSrc] = useState('');
   const fireConfetti = useConfetti();
 
-  // Update lastCodeRef when the 'code' prop changes from external sources (like a file switch)
+  // Expose formatCode to parent via formatRef
+  useEffect(() => {
+    if (formatRef) {
+      formatRef.current = {
+        formatCode: async () => {
+          const saved = lastCodeRef.current || code || localStorage.getItem("codePad_code");
+          const lang = (language || localStorage.getItem("codePad_language") || "python").toLowerCase();
+          
+          if (!saved) return;
+
+          console.log(`Formatting attempt for language: ${lang}`);
+          let formatted = saved;
+
+          try {
+            // JS/JSX/TS — use prettier
+            if (["javascript", "typescript", "nodejs", "js", "ts", "jsx", "tsx"].includes(lang)) {
+              console.log('Formatting via Prettier...');
+              try {
+                formatted = await prettier.format(saved, {
+                  parser: "babel",
+                  plugins: [parserBabel, prettierEstree],
+                  semi: true,
+                  singleQuote: false,
+                  tabWidth: 2,
+                  printWidth: 80,
+                });
+              } catch (err) {
+                console.warn("Prettier failed, using fallback:", err);
+                formatted = saved
+                  .replace(/\t/g, "  ")
+                  .replace(/[ \t]+$/gm, "")
+                  .replace(/\n{3,}/g, "\n\n");
+              }
+            }
+            // Python — Pure JS implementation of the requested stdlib logic
+            else if (lang === "python" || lang === "py") {
+              console.log('Formatting Python via Pure JavaScript (Safe Indent)...');
+              
+              // 1. Expand tabs to 4 spaces & strip trailing whitespace
+              const lines = saved.split("\n");
+              const normalized = lines.map(line => {
+                // Manually expand tabs to 4 spaces
+                return line.replace(/\t/g, "    ").trimEnd();
+              });
+
+              // 2. Remove more than 2 consecutive blank lines
+              const result = [];
+              let blankCount = 0;
+              for (const line of normalized) {
+                if (line.trim() === "") {
+                  blankCount++;
+                  if (blankCount <= 2) {
+                    result.push("");
+                  }
+                } else {
+                  blankCount = 0;
+                  result.push(line);
+                }
+              }
+
+              formatted = result.join("\n").trimEnd() + "\n";
+            }
+            // Fallback for others
+            else {
+              console.log('Applying smart cleanup (others)...');
+              formatted = saved
+                .replace(/\t/g, "    ")
+                .replace(/[ \t]+$/gm, "")
+                .replace(/\n{3,}/g, "\n\n");
+            }
+          } catch (err) {
+            console.warn("Format failed:", err);
+            formatted = saved;
+          }
+
+          // Update local state and parent
+          lastCodeRef.current = formatted;
+          if (onChange) onChange(formatted);
+          localStorage.setItem("codePad_code", formatted);
+
+          // Push to iframe
+          if (iframeRef.current && iframeRef.current.contentWindow) {
+            iframeRef.current.contentWindow.postMessage({
+              eventType: 'populateCode',
+              language: language,
+              files: [
+                {
+                  name: fileName || 'main',
+                  content: formatted
+                }
+              ]
+            }, '*');
+          }
+        }
+      };
+    }
+  }, [formatRef, code, language, fileName, onChange]);
+
+  // Update lastCodeRef when the 'code' prop changes from external sources
   useEffect(() => {
     if (code !== lastCodeRef.current) {
       lastCodeRef.current = code;
+      localStorage.setItem("codePad_code", code);
     }
   }, [code]);
 
@@ -35,13 +137,13 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
           }
 
           // Handle code changes for auto-save
-          // OneCompiler responses to getCode often lack an eventType but include a files array
           const isCodeUpdate = (data.eventType === 'codeChange' || data.action === 'codeChange' || (data.files && Array.isArray(data.files)));
 
           if (isCodeUpdate) {
             const newCode = data.files?.[0]?.content || data.content;
             if (newCode !== undefined && newCode !== lastCodeRef.current) {
-              lastCodeRef.current = newCode; // Update ref immediately
+              lastCodeRef.current = newCode;
+              localStorage.setItem("codePad_code", newCode);
               
               if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
               saveTimeoutRef.current = setTimeout(() => {
@@ -49,7 +151,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
                   console.log('Auto-saving code change...');
                   onChange(newCode);
                 }
-              }, 100); // Faster save (100ms)
+              }, 100);
             }
           }
         }
@@ -88,15 +190,13 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       }
     };
 
-    // If we just finished loading OR the file changes, populate the editor
     if (!loading) {
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-    // We omit 'code' from dependencies to prevent sending code back while typing
-  }, [loading, language, fileName]);
+  }, [loading, language, fileName]); 
 
-  // Polling for code changes (Backup save mechanism at any cost)
+  // Polling for code changes
   useEffect(() => {
     const pollInterval = setInterval(() => {
       if (iframeRef.current && iframeRef.current.contentWindow && !loading) {
@@ -104,13 +204,12 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
           eventType: 'getCode'
         }, '*');
       }
-    }, 500); // High-frequency poll (500ms)
+    }, 500);
 
     return () => clearInterval(pollInterval);
   }, [loading]);
 
   const handleIframeLoad = () => {
-    // Small delay to ensure the editor internally initializes
     setTimeout(() => {
       setLoading(false);
     }, 500);
@@ -129,7 +228,6 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
         transition: 'background-color 0.3s ease',
       }}
     >
-      {/* Loading Overlay */}
       <Fade in={loading}>
         <Box
           sx={{
