@@ -681,7 +681,7 @@ export default function App() {
       template.files.forEach((fileObj, idx) => {
         const filePath = `${template.id}/${fileObj.name}`;
         createFile(filePath);
-        
+
         // Use timeout to let the state settle before updating content
         setTimeout(() => {
           updateFileContent(filePath, fileObj.code);
@@ -694,7 +694,7 @@ export default function App() {
       setTimeout(() => {
         openFile(mainFile);
       }, 50 + template.files.length * 10);
-      
+
     },
     [createFile, updateFileContent, changeFileLanguage, openFile, files],
   );
