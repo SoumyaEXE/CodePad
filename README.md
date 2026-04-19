@@ -1,6 +1,6 @@
 <div align="center">
 
-![CodePad Hero Banner](file:///C:/Users/Soumya/.gemini/antigravity/brain/e674afca-d16e-4076-868a-9c06fc36e0cb/codepad_hero_banner_1776606470305.png)
+![CodePad Hero Banner](https://raw.githubusercontent.com/halfrost/halfrost/master/icons/header_.png)
 
 # 🚀 CodePad: The Ultimate AI-Powered Cloud IDE
 
