@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { ThemeProvider, CssBaseline, Box, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, IconButton, Menu, MenuItem, Tooltip, Typography, useTheme } from '@mui/material';
 
 import { getTheme } from './theme';
 import Navbar from './components/Navbar';
@@ -18,104 +18,288 @@ import { useCodeExecution } from './hooks/useCodeExecution';
 import { useEditorSettings } from './hooks/useEditorSettings';
 import { getLanguageFromExtension } from './utils/languages';
 
-/* ── Sidebar resize handle with collapse button ───── */
+/* ── VS Code–style Activity Bar ───────────────────── */
 
-function SidebarResizeHandle({ onMouseDown, onCollapse }) {
+function ActivityBar({ activePanel, onSelectPanel }) {
+  const items = [
+    {
+      id: 'explorer',
+      tooltip: 'Explorer (Ctrl+B)',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+          <polyline points="13 2 13 9 20 9" />
+        </svg>
+      ),
+    },
+    {
+      id: 'search',
+      tooltip: 'Search (Ctrl+Shift+F)',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <Box
       sx={{
-        width: 12,
-        cursor: 'col-resize',
+        width: 44,
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        position: 'relative',
-        bgcolor: 'transparent',
-        transition: 'background-color 120ms ease',
-        '&:hover': { bgcolor: 'action.hover' },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: '50%',
-          width: '1px',
-          bgcolor: 'divider',
-          opacity: 0.4,
-          transform: 'translateX(-50%)',
-        },
+        bgcolor: 'background.paper',
+        borderRight: '1px solid',
+        borderColor: 'divider',
+        pt: 0.5,
+        gap: 0.25,
       }}
-      onMouseDown={onMouseDown}
     >
-      <Tooltip title="Collapse sidebar (Ctrl+B)" arrow placement="right">
-        <IconButton
-          size="small"
-          onClick={(e) => { e.stopPropagation(); onCollapse(); }}
-          onMouseDown={(e) => e.stopPropagation()}
-          sx={{
-            mt: 0.5,
-            width: 16,
-            height: 16,
-            p: 0,
-            borderRadius: '4px',
-            color: 'text.disabled',
-            zIndex: 1,
-            transition: 'all 120ms ease',
-            '&:hover': {
-              color: 'primary.main',
-              bgcolor: 'action.selected',
-            },
-          }}
-        >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M7 1.5L3 5l4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </IconButton>
-      </Tooltip>
+      {items.map((item) => {
+        const isActive = activePanel === item.id;
+        return (
+          <Tooltip key={item.id} title={item.tooltip} arrow placement="right">
+            <IconButton
+              size="small"
+              onClick={() => onSelectPanel(item.id)}
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 0,
+                color: isActive ? 'text.primary' : 'text.disabled',
+                position: 'relative',
+                transition: 'color 120ms ease',
+                '&:hover': {
+                  color: 'text.primary',
+                  bgcolor: 'transparent',
+                },
+                '&::before': isActive ? {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: '25%',
+                  bottom: '25%',
+                  width: '2px',
+                  borderRadius: '0 2px 2px 0',
+                  bgcolor: 'text.primary',
+                } : {},
+              }}
+            >
+              {item.icon}
+            </IconButton>
+          </Tooltip>
+        );
+      })}
     </Box>
   );
 }
 
-/* ── Thin strip to re-open sidebar when collapsed ──── */
+/* ── Search Panel ─────────────────────────────────── */
 
-function SidebarOpenStrip({ onOpen }) {
+function SearchPanel({ width, files, onOpenFile }) {
+  const [query, setQuery] = useState('');
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const matches = [];
+    for (const [filePath, fileData] of Object.entries(files)) {
+      const fileName = filePath.includes('/') ? filePath.split('/').pop() : filePath;
+      const nameMatch = fileName.toLowerCase().includes(q);
+      const contentLines = [];
+
+      if (fileData.content) {
+        const lines = fileData.content.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(q)) {
+            contentLines.push({ lineNum: i + 1, text: lines[i].trim() });
+            if (contentLines.length >= 5) break; // cap at 5 matches per file
+          }
+        }
+      }
+
+      if (nameMatch || contentLines.length > 0) {
+        matches.push({ filePath, fileName, nameMatch, contentLines });
+      }
+    }
+    return matches;
+  }, [query, files]);
+
+  /* Highlight matching text */
+  const highlightMatch = (text, q) => {
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <Box component="span" sx={{ bgcolor: isDark ? 'rgba(167,139,250,0.3)' : 'rgba(124,58,237,0.2)', borderRadius: '2px', px: '1px' }}>
+          {text.slice(idx, idx + q.length)}
+        </Box>
+        {text.slice(idx + q.length)}
+      </>
+    );
+  };
+
   return (
-    <Tooltip title="Open sidebar (Ctrl+B)" arrow placement="right">
-      <Box
-        onClick={onOpen}
-        sx={{
-          width: 14,
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          cursor: 'pointer',
-          bgcolor: 'background.paper',
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          transition: 'all 120ms ease',
-          '&:hover': {
-            bgcolor: 'action.hover',
-            '& .open-chevron': { color: 'primary.main' },
-          },
-        }}
-      >
+    <Box
+      sx={{
+        width,
+        minWidth: 160,
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'background.paper',
+        flexShrink: 0,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <Box sx={{ px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 600, fontSize: 11, letterSpacing: '0.08em', color: 'text.secondary', userSelect: 'none' }}
+        >
+          SEARCH
+        </Typography>
+      </Box>
+
+      {/* Search input */}
+      <Box sx={{ px: 1, py: 1 }}>
         <Box
-          className="open-chevron"
           sx={{
-            mt: 1,
-            color: 'text.disabled',
-            transition: 'color 120ms ease',
             display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: '5px',
+            px: 1,
+            py: 0.4,
+            transition: 'border-color 150ms ease',
+            '&:focus-within': { borderColor: isDark ? '#a78bfa' : '#7c3aed' },
           }}
         >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M3 1.5L7 5l-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search files..."
+            autoFocus
+            style={{
+              flex: 1,
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              color: isDark ? '#e4e4e7' : '#27272a',
+              fontSize: 12,
+              fontFamily: "'Inter', sans-serif",
+              padding: 0,
+            }}
+          />
+          {query && (
+            <IconButton size="small" onClick={() => setQuery('')} sx={{ p: 0.2, color: 'text.disabled', '&:hover': { color: 'text.primary' } }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </IconButton>
+          )}
         </Box>
       </Box>
-    </Tooltip>
+
+      {/* Results */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 0.5 }}>
+        {query.trim() && results.length === 0 && (
+          <Typography sx={{ fontSize: 11, color: 'text.disabled', px: 1, py: 2, textAlign: 'center' }}>
+            No results found
+          </Typography>
+        )}
+
+        {results.map((result) => (
+          <Box key={result.filePath} sx={{ mb: 0.5 }}>
+            {/* File name */}
+            <Box
+              onClick={() => onOpenFile(result.filePath)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
+                px: 1,
+                py: 0.4,
+                cursor: 'pointer',
+                borderRadius: '4px',
+                '&:hover': { bgcolor: 'action.hover' },
+                transition: 'background-color 120ms ease',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5, flexShrink: 0 }}>
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                <polyline points="13 2 13 9 20 9" />
+              </svg>
+              <Typography noWrap sx={{ fontSize: 12, fontWeight: 500, color: 'text.primary' }}>
+                {highlightMatch(result.fileName, query.trim())}
+              </Typography>
+            </Box>
+
+            {/* Content matches */}
+            {result.contentLines.map((line, i) => (
+              <Box
+                key={i}
+                onClick={() => onOpenFile(result.filePath)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: 0.75,
+                  pl: 3.5,
+                  pr: 1,
+                  py: 0.2,
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  '&:hover': { bgcolor: 'action.hover' },
+                  transition: 'background-color 120ms ease',
+                }}
+              >
+                <Typography sx={{ fontSize: 10, color: 'text.disabled', fontFamily: "'JetBrains Mono', monospace", flexShrink: 0, minWidth: 20, textAlign: 'right' }}>
+                  {line.lineNum}
+                </Typography>
+                <Typography noWrap sx={{ fontSize: 11, color: 'text.secondary', fontFamily: "'JetBrains Mono', monospace" }}>
+                  {highlightMatch(line.text, query.trim())}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+/* ── Thin resize handle between sidebar panel and editor ─ */
+
+function PanelResizeHandle({ onMouseDown }) {
+  return (
+    <Box
+      onMouseDown={onMouseDown}
+      sx={{
+        width: 3,
+        cursor: 'col-resize',
+        flexShrink: 0,
+        bgcolor: 'divider',
+        opacity: 0,
+        transition: 'opacity 150ms ease',
+        '&:hover': { opacity: 1 },
+      }}
+    />
   );
 }
 
@@ -146,9 +330,15 @@ export default function App() {
   const { settings, update: updateSetting } = useEditorSettings();
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
-  /* ── sidebar toggle ────────────────────────────── */
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const toggleSidebar = useCallback(() => setSidebarOpen((p) => !p), []);
+  /* ── sidebar / activity bar panel ──────────────── */
+  const [activePanel, setActivePanel] = useState('explorer'); // 'explorer' | 'search' | null
+  const sidebarOpen = activePanel !== null;
+  const handleSelectPanel = useCallback((panelId) => {
+    setActivePanel((prev) => prev === panelId ? null : panelId);
+  }, []);
+  const toggleSidebar = useCallback(() => {
+    setActivePanel((prev) => prev ? null : 'explorer');
+  }, []);
 
   /* ── resizable panel widths ────────────────────── */
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -302,10 +492,15 @@ export default function App() {
         e.preventDefault();
         handleRun();
       }
-      // Ctrl+B → toggle sidebar
+      // Ctrl+B → toggle explorer
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
         e.preventDefault();
-        setSidebarOpen((p) => !p);
+        setActivePanel((p) => p === 'explorer' ? null : 'explorer');
+      }
+      // Ctrl+Shift+F → toggle search
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        setActivePanel((p) => p === 'search' ? null : 'search');
       }
     }
     window.addEventListener('keydown', handler);
@@ -452,8 +647,11 @@ export default function App() {
 
         {/* Main area */}
         <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
-          {/* Sidebar */}
-          {sidebarOpen ? (
+          {/* Activity Bar — always visible like VS Code */}
+          <ActivityBar activePanel={activePanel} onSelectPanel={handleSelectPanel} />
+
+          {/* Explorer panel */}
+          {activePanel === 'explorer' && (
             <>
               <Sidebar
                 width={sidebarWidth}
@@ -470,10 +668,20 @@ export default function App() {
                 darkMode={darkMode}
                 onToggleDarkMode={toggleDarkMode}
               />
-              <SidebarResizeHandle onMouseDown={startSidebarDrag} onCollapse={toggleSidebar} />
+              <PanelResizeHandle onMouseDown={startSidebarDrag} />
             </>
-          ) : (
-            <SidebarOpenStrip onOpen={toggleSidebar} />
+          )}
+
+          {/* Search panel */}
+          {activePanel === 'search' && (
+            <>
+              <SearchPanel
+                width={sidebarWidth}
+                files={files}
+                onOpenFile={openFile}
+              />
+              <PanelResizeHandle onMouseDown={startSidebarDrag} />
+            </>
           )}
 
           {/* Editor + Output area */}
