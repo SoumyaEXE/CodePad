@@ -872,6 +872,7 @@ export default function App() {
                     code={activeContent}
                     fileName={activeFile ? activeFile.split('/').pop() : ''}
                     darkMode={darkMode}
+                    onChange={handleContentChange}
                   />
                 </Box>
               )}
@@ -988,6 +989,7 @@ export default function App() {
                       code={activeContent}
                       fileName={activeFile ? activeFile.split('/').pop() : ''}
                       darkMode={darkMode}
+                      onChange={handleContentChange}
                     />
                   </Box>
 
