@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Dialog, Box, Typography, IconButton, InputBase, Collapse } from '@mui/material';
+import { Dialog, Box, Typography, IconButton, InputBase, Collapse, useTheme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -12,7 +12,7 @@ const CATEGORY_META = {
   database: { label: 'Databases', color: '#4da6ff' },
 };
 
-function ProjectCard({ template, onClick }) {
+function ProjectCard({ template, onClick, isDark }) {
   return (
     <Box
       onClick={() => onClick(template)}
@@ -26,12 +26,15 @@ function ProjectCard({ template, onClick }) {
         pb: 1.75,
         borderRadius: '12px',
         cursor: 'pointer',
-        bgcolor: '#151515', // dark card bg
-        border: '1px solid transparent',
+        bgcolor: isDark ? '#151515' : '#f9f9f9',
+        border: '1px solid',
+        borderColor: isDark ? 'transparent' : '#eee',
         transition: 'all 150ms ease',
         '&:hover': {
-          bgcolor: '#1c1c1c',
-          borderColor: '#333',
+          bgcolor: isDark ? '#1c1c1c' : '#f1f1f1',
+          borderColor: isDark ? '#333' : '#ddd',
+          transform: 'translateY(-2px)',
+          boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.05)',
         },
         minWidth: 0,
         height: 96,
@@ -45,7 +48,6 @@ function ProjectCard({ template, onClick }) {
         style={{ objectFit: 'contain' }}
         loading="lazy"
         onError={(e) => {
-          // fallback icon if devicon fails
           e.target.src = 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/devicon/devicon-original.svg';
         }}
       />
@@ -54,7 +56,7 @@ function ProjectCard({ template, onClick }) {
           fontSize: 12,
           fontWeight: 600,
           lineHeight: 1.2,
-          color: '#e0e0e0',
+          color: isDark ? '#e0e0e0' : '#333',
           textAlign: 'center',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
@@ -69,13 +71,11 @@ function ProjectCard({ template, onClick }) {
   );
 }
 
-function CategorySection({ categoryId, templates, searchQuery, onSelect }) {
+function CategorySection({ categoryId, templates, searchQuery, onSelect, isDark }) {
   const [expanded, setExpanded] = useState(false);
   const meta = CATEGORY_META[categoryId];
 
-  // If there's a search query, we show all matching and ignore the limit/expansion
   const isSearching = searchQuery.trim().length > 0;
-  
   const visibleTemplates = isSearching ? templates : (expanded ? templates : templates.slice(0, 12));
   const hiddenCount = templates.length - visibleTemplates.length;
 
@@ -95,7 +95,7 @@ function CategorySection({ categoryId, templates, searchQuery, onSelect }) {
         }}
       >
         {visibleTemplates.map((t) => (
-          <ProjectCard key={t.id} template={t} onClick={onSelect} />
+          <ProjectCard key={t.id} template={t} onClick={onSelect} isDark={isDark} />
         ))}
       </Box>
 
@@ -109,8 +109,8 @@ function CategorySection({ categoryId, templates, searchQuery, onSelect }) {
             gap: 0.5,
             mt: 2, 
             cursor: 'pointer',
-            color: '#888',
-            '&:hover': { color: '#ccc' }
+            color: isDark ? '#888' : '#666',
+            '&:hover': { color: isDark ? '#ccc' : '#333' }
           }}
         >
           {expanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
@@ -125,11 +125,12 @@ function CategorySection({ categoryId, templates, searchQuery, onSelect }) {
 
 export default function NewProjectModal({ open, onClose, onCreateProject }) {
   const [query, setQuery] = useState('');
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const handleSelect = (template) => {
     onCreateProject(template);
     onClose();
-    // reset search on close
     setTimeout(() => setQuery(''), 300);
   };
 
@@ -138,7 +139,6 @@ export default function NewProjectModal({ open, onClose, onCreateProject }) {
     setTimeout(() => setQuery(''), 300);
   };
 
-  // Group languages by category
   const grouped = useMemo(() => {
     const q = query.toLowerCase().trim();
     const result = { programming: [], web: [], database: [] };
@@ -161,10 +161,11 @@ export default function NewProjectModal({ open, onClose, onCreateProject }) {
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: '#0a0a0a', // very dark background matching screenshot
+          bgcolor: isDark ? '#0a0a0a' : '#ffffff',
           backgroundImage: 'none',
           borderRadius: '16px',
-          border: '1px solid #222',
+          border: '1px solid',
+          borderColor: isDark ? '#222' : '#eee',
           height: '85vh',
           display: 'flex',
           flexDirection: 'column'
@@ -185,7 +186,7 @@ export default function NewProjectModal({ open, onClose, onCreateProject }) {
         <Typography sx={{ fontSize: 22, fontWeight: 600, color: '#4da6ff', mx: 'auto' }}>
           Choose a Language to Get Started
         </Typography>
-        <IconButton onClick={handleClose} size="small" sx={{ color: '#888', position: 'absolute', right: 16, top: 16 }}>
+        <IconButton onClick={handleClose} size="small" sx={{ color: isDark ? '#888' : '#999', position: 'absolute', right: 16, top: 16 }}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -196,27 +197,30 @@ export default function NewProjectModal({ open, onClose, onCreateProject }) {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            bgcolor: '#1a1a1a',
+            bgcolor: isDark ? '#1a1a1a' : '#f5f5f5',
             borderRadius: '24px',
             px: 2,
             py: 0.5,
-            border: '1px solid #333',
-            transition: 'border-color 0.2s',
+            border: '1px solid',
+            borderColor: isDark ? '#333' : '#e0e0e0',
+            transition: 'all 0.2s',
             '&:focus-within': {
-              borderColor: '#555'
+              borderColor: isDark ? '#555' : '#4da6ff',
+              bgcolor: isDark ? '#1a1a1a' : '#fff',
+              boxShadow: isDark ? 'none' : '0 0 0 2px rgba(77, 166, 255, 0.1)'
             }
           }}
         >
-          <SearchIcon sx={{ color: '#888', mr: 1, fontSize: 20 }} />
+          <SearchIcon sx={{ color: isDark ? '#888' : '#999', mr: 1, fontSize: 20 }} />
           <InputBase
             placeholder="Search languages..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             fullWidth
             sx={{ 
-              color: '#fff', 
+              color: isDark ? '#fff' : '#333', 
               fontSize: 15,
-              '& input::placeholder': { color: '#666', opacity: 1 }
+              '& input::placeholder': { color: isDark ? '#666' : '#999', opacity: 1 }
             }}
           />
         </Box>
@@ -230,18 +234,18 @@ export default function NewProjectModal({ open, onClose, onCreateProject }) {
           overflowY: 'auto',
           flexGrow: 1,
           '&::-webkit-scrollbar': { width: 6 },
-          '&::-webkit-scrollbar-thumb': { bgcolor: '#333', borderRadius: 3 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: isDark ? '#333' : '#ddd', borderRadius: 3 },
         }}
       >
         {grouped.programming.length === 0 && grouped.web.length === 0 && grouped.database.length === 0 ? (
-          <Typography sx={{ color: '#888', textAlign: 'center', mt: 4 }}>
+          <Typography sx={{ color: isDark ? '#888' : '#999', textAlign: 'center', mt: 4 }}>
             No languages found matching "{query}"
           </Typography>
         ) : (
           <>
-            <CategorySection categoryId="programming" templates={grouped.programming} searchQuery={query} onSelect={handleSelect} />
-            <CategorySection categoryId="web" templates={grouped.web} searchQuery={query} onSelect={handleSelect} />
-            <CategorySection categoryId="database" templates={grouped.database} searchQuery={query} onSelect={handleSelect} />
+            <CategorySection categoryId="programming" templates={grouped.programming} searchQuery={query} onSelect={handleSelect} isDark={isDark} />
+            <CategorySection categoryId="web" templates={grouped.web} searchQuery={query} onSelect={handleSelect} isDark={isDark} />
+            <CategorySection categoryId="database" templates={grouped.database} searchQuery={query} onSelect={handleSelect} isDark={isDark} />
           </>
         )}
       </Box>

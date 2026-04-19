@@ -3,7 +3,7 @@ import { Box, Fade, CircularProgress } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
 import jsbeautify from 'js-beautify';
 
-const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange, formatRef }, ref) {
+const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange, formatRef, runRef }, ref) {
   const iframeRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastCodeRef = useRef(code);
@@ -48,7 +48,19 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
         }
       };
     }
-  }, [formatRef, code, language, fileName, onChange]);
+    if (runRef) {
+      runRef.current = {
+        runCode: () => {
+          if (iframeRef.current && iframeRef.current.contentWindow) {
+            console.log('Triggering run from Navbar...');
+            iframeRef.current.contentWindow.postMessage({
+              eventType: 'triggerRun'
+            }, '*');
+          }
+        }
+      };
+    }
+  }, [formatRef, runRef, code, language, fileName, onChange]);
 
   // Update lastCodeRef when the 'code' prop changes from external sources
   useEffect(() => {
@@ -104,7 +116,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   // Handle theme/language/src changes
   useEffect(() => {
     const theme = darkMode ? 'dark' : 'light';
-    const newSrc = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&listenToEvents=true&codeChangeEvent=true`;
+    const newSrc = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&hideRun=true&listenToEvents=true&codeChangeEvent=true`;
 
     if (newSrc !== currentSrc) {
       setLoading(true);

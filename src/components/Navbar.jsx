@@ -7,6 +7,7 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DataObjectOutlinedIcon from '@mui/icons-material/DataObjectOutlined';
 import FullscreenOutlinedIcon from '@mui/icons-material/FullscreenOutlined';
 import FullscreenExitOutlinedIcon from '@mui/icons-material/FullscreenExitOutlined';
@@ -65,7 +66,6 @@ export default function Navbar({
 
   // Theme-derived colors (indigo)
   const primary = darkMode ? '#6366F1' : '#4F46E5';
-  const primaryLight = darkMode ? '#818CF8' : '#6366F1';
 
   return (
     <>
@@ -96,7 +96,6 @@ export default function Navbar({
               mr: 1,
             }}
           >
-            {/* Logo icon */}
             <Box
               sx={{
                 width: 34,
@@ -112,7 +111,6 @@ export default function Navbar({
               <DataObjectOutlinedIcon sx={{ fontSize: 18, color: '#FFFFFF' }} />
             </Box>
 
-            {/* Brand text */}
             <Typography
               sx={{
                 fontWeight: 800,
@@ -129,10 +127,8 @@ export default function Navbar({
             </Typography>
           </Box>
 
-          {/* Divider */}
           <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.5, opacity: 0.5 }} />
 
-          {/* New Playground */}
           <Button
             onClick={onNewProject}
             startIcon={<AddIcon sx={{ fontSize: '15px !important' }} />}
@@ -144,15 +140,12 @@ export default function Navbar({
               background: darkMode
                 ? 'linear-gradient(135deg, #6366F1, #4F46E5)'
                 : 'linear-gradient(135deg, #4F46E5, #4338CA)',
-              boxShadow: `0 2px 8px ${darkMode ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.3)'}`,
               border: 'none',
               transition: 'all 150ms ease',
               '&:hover': {
                 background: darkMode
                   ? 'linear-gradient(135deg, #818CF8, #6366F1)'
                   : 'linear-gradient(135deg, #6366F1, #4F46E5)',
-                boxShadow: `0 4px 14px ${darkMode ? 'rgba(99,102,241,0.4)' : 'rgba(79,70,229,0.4)'}`,
-                transform: 'translateY(-1px)',
               },
             }}
           >
@@ -163,6 +156,31 @@ export default function Navbar({
         {/* Right actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            {/* RUN BUTTON (Moved to right) */}
+            <Button
+              onClick={onRun}
+              disabled={isRunning}
+              startIcon={<PlayArrowIcon sx={{ fontSize: '18px !important' }} />}
+              size="small"
+              sx={{
+                height: 28,
+                textTransform: 'none', fontSize: 12, fontWeight: 700,
+                color: '#fff', px: 2, py: 0, borderRadius: '6px',
+                fontFamily: "'Inter', sans-serif",
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                mr: 1,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
+                },
+                '&:disabled': {
+                  background: '#ccc',
+                  color: '#666',
+                }
+              }}
+            >
+              {isRunning ? 'Running...' : 'Run'}
+            </Button>
+
             <Button
               size="small"
               variant="outlined"

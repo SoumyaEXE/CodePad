@@ -460,6 +460,7 @@ export default function App() {
   const [mobileTab, setMobileTab] = useState('code');
   const editorRef = useRef(null);
   const formatRef = useRef(null);
+  const runRef = useRef(null);
 
   /* ── resizable panel widths ────────────────────── */
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -592,7 +593,11 @@ export default function App() {
   const isRunning = false;
   const output = '';
   const clearOutput = () => {};
-  const handleRun = () => {};
+  const handleRun = useCallback(() => {
+    if (runRef.current) {
+      runRef.current.runCode();
+    }
+  }, []);
   const showOutput = false;
   const setShowOutput = () => {};
   const outputPanelRef = { current: null };
@@ -819,6 +824,7 @@ export default function App() {
           isMobile={isMobile}
           editorRef={editorRef}
           onFormat={() => formatRef.current?.formatCode()}
+          onRun={handleRun}
         />
 
         {/* ═══ MOBILE LAYOUT ═══ */}
@@ -994,6 +1000,7 @@ export default function App() {
                       darkMode={darkMode}
                       onChange={handleContentChange}
                       formatRef={formatRef}
+                      runRef={runRef}
                     />
                   </Box>
 
