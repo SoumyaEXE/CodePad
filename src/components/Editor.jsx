@@ -1,21 +1,36 @@
 import React, { forwardRef, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
+import { useConfetti } from '../hooks/useConfetti';
 
 const Editor = forwardRef(function Editor({ language, code, fileName, darkMode }, ref) {
   const iframeRef = useRef(null);
+  const fireConfetti = useConfetti();
 
   useEffect(() => {
     const handleMessage = (event) => {
-      // Handle messages from OneCompiler if needed
-      // e.g., code change events
-      if (event.data && event.data.eventType === 'codeChange') {
-        // console.log('Code changed in OneCompiler:', event.data);
+      // Log all messages received by the window for debugging
+      if (event.origin.includes('onecompiler.com')) {
+        console.log('OneCompiler Message:', event.data);
+
+        if (event.data) {
+          const data = event.data;
+          // OneCompiler sends action: 'runComplete' when execution is finished
+          // We check if it was successful
+          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') && 
+                            data.result && 
+                            data.result.success === true;
+          
+          if (isSuccess) {
+            console.log('Execution successful! Firing confetti...');
+            fireConfetti();
+          }
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [fireConfetti]);
 
   useEffect(() => {
     const sendCode = () => {
@@ -34,12 +49,12 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode }
     };
 
     // Give it a small delay to ensure iframe is ready
-    const timer = setTimeout(sendCode, 500);
+    const timer = setTimeout(sendCode, 800); // Increased delay slightly
     return () => clearTimeout(timer);
   }, [language, code, fileName]);
 
   const theme = darkMode ? 'dark' : 'light';
-  const src = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&listenToEvents=true`;
+  const src = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&listenToEvents=true&codeChangeEvent=true`;
 
   return (
     <Box
