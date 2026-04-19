@@ -770,6 +770,7 @@ export default function App() {
               {mobileTab === 'code' && (
                 <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                   <FileTabs
+                    files={files}
                     openTabs={openTabs}
                     activeFile={activeFile}
                     onSelectTab={setActiveFile}
@@ -875,6 +876,7 @@ export default function App() {
               {/* Editor + Output area */}
               <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', minWidth: 0 }}>
                 <FileTabs
+                  files={files}
                   openTabs={openTabs}
                   activeFile={activeFile}
                   onSelectTab={setActiveFile}

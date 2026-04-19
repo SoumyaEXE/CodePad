@@ -2,17 +2,18 @@ import React from 'react';
 import { Box, Button, Typography, IconButton, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { FileIcon } from './FileIcon';
 
 /* ── single tab ─────────────────────────────────── */
 
-function Tab({ filename, isActive, onSelect, onClose }) {
+function Tab({ filename, language, isActive, onSelect, onClose }) {
   return (
     <Box
       onClick={() => onSelect(filename)}
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 0.5,
+        gap: 0.75,
         height: '100%',
         px: 1.5,
         cursor: 'pointer',
@@ -29,6 +30,7 @@ function Tab({ filename, isActive, onSelect, onClose }) {
         flexShrink: 0,
       }}
     >
+      <FileIcon language={language} size={15} />
       <Typography
         variant="caption"
         noWrap
@@ -64,6 +66,7 @@ function Tab({ filename, isActive, onSelect, onClose }) {
 /* ── tab bar ────────────────────────────────────── */
 
 export default function FileTabs({
+  files = {},
   openTabs,
   activeFile,
   onSelectTab,
@@ -75,7 +78,7 @@ export default function FileTabs({
 }) {
   return (
     <Box
-      id="tab-bar"
+      id="file-tabs"
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -92,14 +95,17 @@ export default function FileTabs({
           display: 'flex',
           alignItems: 'center',
           flexGrow: 1,
-          overflow: 'hidden',
+          overflowX: 'auto',
+          overflowY: 'hidden',
           height: '100%',
+          '&::-webkit-scrollbar': { height: 0, display: 'none' }, // hide scrollbar for clean look
         }}
       >
         {openTabs.map((name) => (
           <Tab
             key={name}
             filename={name}
+            language={files[name]?.language || 'javascript'}
             isActive={name === activeFile}
             onSelect={onSelectTab}
             onClose={onCloseTab}
