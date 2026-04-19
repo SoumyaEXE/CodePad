@@ -12,6 +12,7 @@ import LanguageModal from './components/LanguageModal';
 import NewProjectModal from './components/NewProjectModal';
 import SettingsModal from './components/SettingsModal';
 import AISidebar from './components/AISidebar';
+import Preloader from './components/Preloader';
 import { useFileSystem } from './hooks/useFileSystem';
 import { useCodeExecution } from './hooks/useCodeExecution';
 import { useEditorSettings } from './hooks/useEditorSettings';
@@ -324,9 +325,12 @@ export default function App() {
 
 
   /* ── render ────────────────────────────────────── */
+  const [appReady, setAppReady] = useState(false);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <Preloader onFinish={() => setAppReady(true)} />
 
       {/* Drag overlay — blocks iframe from stealing mouse events */}
       {isDragging && (

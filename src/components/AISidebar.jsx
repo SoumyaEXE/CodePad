@@ -286,17 +286,40 @@ export default function AISidebar({
         status: 'pending',
       }));
 
-      const responseText =
-        assistantText ||
-        (parsed.length > 0
-          ? `I've prepared ${parsed.length} file change${parsed.length === 1 ? '' : 's'} for you.`
-          : '');
+      /* Auto-execute immediate actions (stdin / run) */
+      const fileProposals = [];
+      const autoActions = [];
+      for (const p of parsed) {
+        if (p.type === 'set_stdin') {
+          if (typeof actions.setStdin === 'function') {
+            actions.setStdin(p.value || '');
+            autoActions.push(`Set stdin: ${p.summary || p.value}`);
+          }
+        } else if (p.type === 'run_code') {
+          if (typeof actions.runCode === 'function') {
+            // Small delay so stdin can be applied first
+            setTimeout(() => actions.runCode(), 150);
+            autoActions.push(`Running code: ${p.summary}`);
+          }
+        } else {
+          fileProposals.push(p);
+        }
+      }
+
+      /* Build response text */
+      let responseText = assistantText || '';
+      if (!responseText && fileProposals.length > 0) {
+        responseText = `I've prepared ${fileProposals.length} file change${fileProposals.length === 1 ? '' : 's'} for you.`;
+      }
+      if (autoActions.length > 0 && !responseText) {
+        responseText = autoActions.join('\n');
+      }
 
       if (responseText) {
         setMessages((prev) => [...prev, createMessage('assistant', responseText)]);
       }
-      if (parsed.length > 0) {
-        setProposals((prev) => [...prev, ...parsed]);
+      if (fileProposals.length > 0) {
+        setProposals((prev) => [...prev, ...fileProposals]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to get a response.');

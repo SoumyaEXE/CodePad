@@ -192,6 +192,23 @@ export function buildGroqTools() {
       },
       ['path', 'summary'],
     ),
+    toolSpec(
+      'set_stdin',
+      'Set the STDIN input that will be fed to the program when it runs. Use this when the code requires user input (e.g. input() in Python, scanf in C, etc.).',
+      {
+        value: { type: 'string', description: 'The stdin input string. Use newlines to separate multiple inputs.' },
+        summary: { type: 'string', description: 'Brief explanation of what inputs are being provided.' },
+      },
+      ['value', 'summary'],
+    ),
+    toolSpec(
+      'run_code',
+      'Execute the current active file. Use this after fixing code or setting stdin to immediately show the user the result. The output panel will automatically switch to show the result.',
+      {
+        summary: { type: 'string', description: 'Brief explanation of why you are running the code.' },
+      },
+      ['summary'],
+    ),
   ];
 }
 
@@ -263,6 +280,25 @@ export function parseGroqToolCalls(toolCalls = []) {
           id: toolCall?.id || `${name}_${index}_${Date.now()}`,
           type: 'delete_folder',
           path: normalizePath(argumentsObject.path || argumentsObject.folderPath || ''),
+          summary: typeof argumentsObject.summary === 'string' ? argumentsObject.summary : '',
+          toolName: name,
+        };
+      }
+
+      if (name === 'set_stdin') {
+        return {
+          id: toolCall?.id || `${name}_${index}_${Date.now()}`,
+          type: 'set_stdin',
+          value: typeof argumentsObject.value === 'string' ? argumentsObject.value : '',
+          summary: typeof argumentsObject.summary === 'string' ? argumentsObject.summary : '',
+          toolName: name,
+        };
+      }
+
+      if (name === 'run_code') {
+        return {
+          id: toolCall?.id || `${name}_${index}_${Date.now()}`,
+          type: 'run_code',
           summary: typeof argumentsObject.summary === 'string' ? argumentsObject.summary : '',
           toolName: name,
         };
