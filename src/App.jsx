@@ -17,6 +17,7 @@ import { useFileSystem } from './hooks/useFileSystem';
 import { useCodeExecution } from './hooks/useCodeExecution';
 import { useEditorSettings } from './hooks/useEditorSettings';
 import { getLanguageFromExtension } from './utils/languages';
+import { LANGUAGE_TEMPLATES } from './utils/languageTemplates';
 
 /* ── VS Code–style Activity Bar ───────────────────── */
 
@@ -662,7 +663,20 @@ export default function App() {
 
   /* ── new project ─────────────────────────────── */
   const handleCreateProject = useCallback(
-    (template) => {
+    (template, isFromUrl = false) => {
+      if (!isFromUrl) {
+        // Just open in new tab
+        window.open('/' + template.id, '_blank');
+        return;
+      }
+
+      // If we're bootstrapping from URL, check if files already exist
+      const mainFile = `${template.id}/${template.files[0].name}`;
+      if (files[mainFile]) {
+        openFile(mainFile);
+        return;
+      }
+
       // Create all files associated with the template
       template.files.forEach((fileObj, idx) => {
         const filePath = `${template.id}/${fileObj.name}`;
@@ -678,15 +692,23 @@ export default function App() {
 
       // After creating files, set active to the primary file
       setTimeout(() => {
-        const mainFile = `${template.id}/${template.files[0].name}`;
         openFile(mainFile);
       }, 50 + template.files.length * 10);
       
-      // Update browser URL silently
-      window.history.pushState({}, '', '/' + template.id);
     },
-    [createFile, updateFileContent, changeFileLanguage, openFile],
+    [createFile, updateFileContent, changeFileLanguage, openFile, files],
   );
+
+  /* ── URL Bootstrapping ───────────────────────── */
+  useEffect(() => {
+    const path = window.location.pathname.substring(1); // remove leading slash
+    if (path) {
+      const template = LANGUAGE_TEMPLATES.find(t => t.id === path);
+      if (template) {
+        handleCreateProject(template, true);
+      }
+    }
+  }, []);
 
   /* ── editor context menu actions ─────────────── */
   const [editorMenuAnchor, setEditorMenuAnchor] = useState(null);
