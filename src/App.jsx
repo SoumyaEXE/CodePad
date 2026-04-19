@@ -663,15 +663,29 @@ export default function App() {
   /* ── new project ─────────────────────────────── */
   const handleCreateProject = useCallback(
     (template) => {
-      const lang = getLanguageFromExtension(template.file);
-      createFile(template.file);
-      // Need to set content after creation
+      // Create all files associated with the template
+      template.files.forEach((fileObj, idx) => {
+        const filePath = `${template.id}/${fileObj.name}`;
+        createFile(filePath);
+        
+        // Use timeout to let the state settle before updating content
+        setTimeout(() => {
+          updateFileContent(filePath, fileObj.code);
+          const lang = getLanguageFromExtension(fileObj.name);
+          changeFileLanguage(filePath, lang);
+        }, 50 + idx * 10);
+      });
+
+      // After creating files, set active to the primary file
       setTimeout(() => {
-        updateFileContent(template.file, template.code);
-        if (template.id) changeFileLanguage(template.file, template.id);
-      }, 50);
+        const mainFile = `${template.id}/${template.files[0].name}`;
+        openFile(mainFile);
+      }, 50 + template.files.length * 10);
+      
+      // Update browser URL silently
+      window.history.pushState({}, '', '/' + template.id);
     },
-    [createFile, updateFileContent, changeFileLanguage],
+    [createFile, updateFileContent, changeFileLanguage, openFile],
   );
 
   /* ── editor context menu actions ─────────────── */
