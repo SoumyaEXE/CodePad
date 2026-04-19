@@ -1,7 +1,92 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { Box, Fade, CircularProgress } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
-import jsbeautify from 'js-beautify';
+
+// Pure JS universal formatter — no API, no packages
+const universalFormat = (code, lang) => {
+  const INDENT = ["python"].includes(lang) ? "    " : "  ";
+  const lines = code.split("\n");
+  const result = [];
+  let indentLevel = 0;
+
+  // C-style languages: c, cpp, java, javascript, typescript, nodejs
+  const cStyle = ["c", "cpp", "java", "javascript", "typescript", "nodejs", "cs"];
+
+  if (cStyle.includes(lang)) {
+    for (let line of lines) {
+      let trimmed = line.trim();
+      if (!trimmed) {
+        result.push("");
+        continue;
+      }
+
+      // Decrease indent BEFORE printing if line starts with closing brace
+      if (trimmed.startsWith("}") || trimmed.startsWith("]") || trimmed.startsWith(")")) {
+        indentLevel = Math.max(0, indentLevel - 1);
+      }
+
+      result.push(INDENT.repeat(indentLevel) + trimmed);
+
+      // Increase indent AFTER printing if line ends with opening brace
+      const openCount = (trimmed.match(/[{[(]/g) || []).length;
+      const closeCount = (trimmed.match(/[}\])]/g) || []).length;
+      indentLevel = Math.max(0, indentLevel + openCount - closeCount);
+    }
+  }
+  // Python style
+  else if (lang === "python") {
+    for (let line of lines) {
+      let trimmed = line.trim();
+      if (!trimmed) {
+        result.push("");
+        continue;
+      }
+
+      // Decrease indent for these keywords
+      if (
+        trimmed.startsWith("else:") ||
+        trimmed.startsWith("elif ") ||
+        trimmed.startsWith("except") ||
+        trimmed.startsWith("finally:") ||
+        trimmed.startsWith("except:")
+      ) {
+        indentLevel = Math.max(0, indentLevel - 1);
+      }
+
+      result.push(INDENT.repeat(indentLevel) + trimmed);
+
+      // Increase indent after block-opening lines
+      if (
+        trimmed.endsWith(":") &&
+        (trimmed.startsWith("if ") ||
+          trimmed.startsWith("elif ") ||
+          trimmed.startsWith("else:") ||
+          trimmed.startsWith("for ") ||
+          trimmed.startsWith("while ") ||
+          trimmed.startsWith("def ") ||
+          trimmed.startsWith("class ") ||
+          trimmed.startsWith("try:") ||
+          trimmed.startsWith("except") ||
+          trimmed.startsWith("finally:") ||
+          trimmed.startsWith("with "))
+      ) {
+        indentLevel++;
+      }
+    }
+  }
+  // Any other language — basic cleanup only
+  else {
+    for (let line of lines) {
+      result.push(line.replace(/\t/g, "    ").trimEnd());
+    }
+  }
+
+  // Post-processing: max 2 blank lines, trim trailing whitespace
+  return result
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trimEnd() + "\n";
+};
 
 const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange, formatRef, runRef }, ref) {
   const iframeRef = useRef(null);
@@ -11,21 +96,23 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   const [currentSrc, setCurrentSrc] = useState('');
   const fireConfetti = useConfetti();
 
-  // Expose formatCode to parent via formatRef
+  // Expose formatCode & runCode to parent
   useEffect(() => {
     if (formatRef) {
       formatRef.current = {
         formatCode: () => {
-          const currentCode = lastCodeRef.current || code;
+          const currentCode = lastCodeRef.current || code || localStorage.getItem("codePad_code");
           if (!currentCode) return;
 
-          const formatted = jsbeautify(currentCode, {
-            indent_size: 4,
-            space_in_empty_paren: true,
-            preserve_newlines: true,
-            max_preserve_newlines: 2,
-            end_with_newline: true,
-          });
+          const lang = (language || localStorage.getItem("codePad_language") || "python").toLowerCase();
+          
+          let formatted = currentCode;
+          try {
+            formatted = universalFormat(currentCode, lang);
+          } catch (err) {
+            console.warn("Format failed:", err);
+            formatted = currentCode;
+          }
 
           // Update local state and parent
           lastCodeRef.current = formatted;
@@ -76,12 +163,12 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       if (event.origin.includes('onecompiler.com')) {
         if (event.data) {
           const data = event.data;
-
+          
           // Confetti logic
-          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') &&
-            data.result &&
-            data.result.success === true;
-
+          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') && 
+                            data.result && 
+                            data.result.success === true;
+          
           if (isSuccess) {
             console.log('Execution successful! Firing confetti...');
             fireConfetti();
@@ -95,7 +182,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
             if (newCode !== undefined && newCode !== lastCodeRef.current) {
               lastCodeRef.current = newCode;
               localStorage.setItem("codePad_code", newCode);
-
+              
               if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
               saveTimeoutRef.current = setTimeout(() => {
                 if (onChange) {
@@ -117,7 +204,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   useEffect(() => {
     const theme = darkMode ? 'dark' : 'light';
     const newSrc = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&hideRun=true&listenToEvents=true&codeChangeEvent=true`;
-
+    
     if (newSrc !== currentSrc) {
       setLoading(true);
       setCurrentSrc(newSrc);
@@ -145,7 +232,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-  }, [loading, language, fileName]);
+  }, [loading, language, fileName]); 
 
   // Polling for code changes
   useEffect(() => {

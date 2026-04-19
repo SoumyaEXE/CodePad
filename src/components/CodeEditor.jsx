@@ -1,12 +1,6 @@
 import React, { useCallback, useImperativeHandle, forwardRef, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import Editor from '@monaco-editor/react';
-import beautify from 'js-beautify';
-import prettier from 'prettier/standalone';
-import * as babelPlugin from 'prettier/plugins/babel';
-import * as estreePlugin from 'prettier/plugins/estree';
-import * as htmlPlugin from 'prettier/plugins/html';
-import * as cssPlugin from 'prettier/plugins/postcss';
 import { getMonacoLanguage } from '../utils/languages';
 
 /* ── custom themes ───────────────────────────────── */
@@ -82,90 +76,8 @@ const CodeEditor = forwardRef(({
       validate: false,
     });
 
-    /* ── Register js-beautify formatters ── */
-    const formatters = [
-      { lang: 'javascript', type: 'js' },
-      { lang: 'typescript', type: 'js' },
-      { lang: 'html', type: 'html' },
-      { lang: 'css', type: 'css' },
-      { lang: 'json', type: 'js' },
-    ];
-
-    formatters.forEach(({ lang, type }) => {
-      monaco.languages.registerDocumentFormattingEditProvider(lang, {
-        async provideDocumentFormattingEdits(model) {
-          const text = model.getValue();
-          let formatted;
-
-          // Try Prettier first
-          try {
-            const prettierConfig = {
-              parser: null,
-              plugins: [babelPlugin, estreePlugin, htmlPlugin, cssPlugin],
-              semi: true,
-              singleQuote: true,
-              tabWidth: 2,
-              trailingComma: 'es5',
-              printWidth: 80,
-            };
-
-            if (lang === 'javascript' || lang === 'typescript' || lang === 'json') {
-              prettierConfig.parser = lang === 'json' ? 'json' : 'babel';
-            } else if (lang === 'html') {
-              prettierConfig.parser = 'html';
-            } else if (lang === 'css') {
-              prettierConfig.parser = 'css';
-            }
-
-            if (prettierConfig.parser) {
-              formatted = await prettier.format(text, prettierConfig);
-              return [{
-                range: model.getFullModelRange(),
-                text: formatted,
-              }];
-            }
-          } catch (e) {
-            console.warn('Prettier formatting failed, falling back to js-beautify:', e);
-          }
-
-          // Fallback to js-beautify
-          const options = {
-            indent_size: 2,
-            indent_char: ' ',
-            max_preserve_newlines: 2,
-            preserve_newlines: true,
-            keep_array_indentation: false,
-            break_chained_methods: false,
-            indent_scripts: 'normal',
-            brace_style: 'collapse',
-            space_before_conditional: true,
-            unescape_strings: false,
-            jslint_happy: false,
-            end_with_newline: false,
-            wrap_line_length: 0,
-            indent_inner_html: false,
-            comma_first: false,
-            e4x: true,
-            indent_empty_lines: false
-          };
-
-          try {
-            if (type === 'js') formatted = beautify.js(text, options);
-            else if (type === 'html') formatted = beautify.html(text, options);
-            else if (type === 'css') formatted = beautify.css(text, options);
-            else formatted = beautify(text, options);
-
-            return [{
-              range: model.getFullModelRange(),
-              text: formatted,
-            }];
-          } catch (e) {
-            console.error('Formatting failed:', e);
-            return [];
-          }
-        },
-      });
-    });
+    /* Formatting for Monaco is currently disabled in favor of the 
+       pure JS 'universalFormat' handled in Editor.jsx. */
   }, []);
 
   /** Mount: cursor tracking + context menu actions */
@@ -247,19 +159,6 @@ const CodeEditor = forwardRef(({
             const text = await navigator.clipboard.readText();
             ed.executeEdits('', [{ range: ed.getSelection(), text }]);
           } catch { /* clipboard access denied */ }
-        },
-      });
-
-      // Format Document
-      editor.addAction({
-        id: 'codepad.format',
-        label: 'Format Document',
-        keybindings: [monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF],
-        contextMenuGroupId: 'modification',
-        contextMenuOrder: 1,
-        run: (ed) => {
-          // Trigger the original formatting internally
-          ed.trigger('codepad', 'editor.action.formatDocument', null);
         },
       });
     },

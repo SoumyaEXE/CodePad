@@ -1,167 +1,152 @@
-<div align="center">
+# CodePad
 
-![CodePad Hero Banner](https://raw.githubusercontent.com/halfrost/halfrost/master/icons/header_.png)
+A browser-based code editor with multi-language execution, AI-assisted coding, and real-time output — built with React and Material UI.
 
-# 🚀 CodePad: The Ultimate AI-Powered Cloud IDE
-
-**Next-Gen Development Environment with 80+ Languages, AI Assistance, and Cloud Execution.**
-
-[![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)](https://reactjs.org/)
-[![Monaco Editor](https://img.shields.io/badge/Monaco_Editor-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white)](https://microsoft.github.io/monaco-editor/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![OneCompiler](https://img.shields.io/badge/Execution-OneCompiler-blue?style=for-the-badge)](https://onecompiler.com/)
-
-[Explore Features](#-features) • [Tech Stack](#-tech-stack) • [Quick Start](#-getting-started) • [Contributing](#-contributing)
+**Live Demo:** [code.isoumya.xyz](https://code.isoumya.xyz) &nbsp;·&nbsp; **Repository:** [github.com/SoumyaEXE/CodePad](https://github.com/SoumyaEXE/CodePad)
 
 ---
 
-</div>
+## Overview
 
-## 🌟 Overview
-
-**CodePad** is a premium, open-source cloud IDE designed for the modern developer. It bridges the gap between local power and cloud flexibility. Whether you are a student learning to code, a competitive programmer, or a web developer building the next big thing, CodePad provides an immersive environment to write, debug, and execute code instantly.
-
-### Why CodePad?
-- **AI-Integrated**: A built-in coding assistant that understands your context and proposes file changes.
-- **Battery-Included**: 80+ programming languages supported out of the box.
-- **Zero Setup**: Write and run code in the browser without installing any compilers or runtimes.
-- **Premium UX**: Smooth animations, celebratory effects (confetti!), and highly customizable themes.
+CodePad is a frontend-only cloud IDE that lets you write and execute code in the browser without any local setup. It combines a Monaco-powered editor with OneCompiler's execution engine and an integrated AI assistant for real-time debugging and code explanations.
 
 ---
 
-## ✨ Features
+## Features
 
-### 🧠 AI-Powered Coding Assistant
-- Context-aware code suggestions.
-- Interactive chat interface for debugging and architecture advice.
-- Smart "File Proposals" that let the AI draft and suggest entire file structures.
+**Editor**
+- Monaco Editor (same engine as VS Code) with syntax highlighting for 80+ languages
+- Dark and light theme toggle — flips both the app UI and editor theme simultaneously
+- Code auto-saved to `localStorage` on every keystroke and restored on page refresh
+- Format Code button — Prettier for JavaScript/TypeScript, basic normalization for other languages
+- Adjustable font size, JetBrains Mono font, minimap toggle
 
-### ⚡ Professional-Grade Editor
-- **Powered by Monaco**: The same engine that drives VS Code.
-- **Advanced Formatting**: Integrated with Prettier and JS-Beautify for clean, consistent code.
-- **Custom Themes**: Sleek Dark and Light modes tailored for long coding sessions.
-- **Personalized Experience**: Adjustable font sizes, JetBrains Mono font support, minimap toggles, and more.
+**Execution**
+- Run button in the app navbar triggers execution via OneCompiler embed postMessage API
+- Supports stdin, stdout, stderr, and execution time
+- Confetti animation fires on successful execution
 
-### 🚀 Instant Cloud Execution
-- **80+ Languages**: From Python and Java to Rust, Go, and even BrainFK.
-- **Web Preview**: Real-time rendering for HTML, React, Vue, and Tailwind CSS projects.
-- **Detailed Output**: Full support for `stdin`, `stdout`, `stderr`, and execution time tracking.
-- **Celebratory UI**: Success confetti to reward your coding milestones!
-
----
-
-## 🧩 Format Code — Implementation Notes
-
-The **Format** button is fully functional for JavaScript and TypeScript using Prettier (browser standalone).
-
-For Python, C, C++, and Java — full AST-based formatting was attempted but not possible due to the following technical constraints:
-
-1. **Piston API (emkc.org)**: Initially used to run Black formatter for Python server-side. Returned 401 after free tier changes. Removed to avoid runtime failures.
-2. **Prettier**: Only supports JS/TS/HTML/CSS. No support for systems languages by design.
-3. **WebAssembly-based formatters** (e.g. clang-format via WASM): Bundle size exceeds 40MB, not suitable for a static web deployment.
-4. **Server-side formatting**: All server-side formatting solutions require a backend — this project is a fully static frontend deployment with no server.
-
-### Current behavior for unsupported languages:
-- Normalizes indentation (tabs → spaces)
-- Removes trailing whitespace  
-- Collapses excessive blank lines
-- Basic brace-based indent correction for C-style languages
-
-> [!NOTE]
-> This is a known limitation of browser-only code editors without a backend formatting service.
+**AI Assistant**
+- Sidebar powered by Tambo AI SDK with Groq (llama-3.3-70b-versatile) as the LLM backend
+- Two modes: **Fix Code** (attaches current editor code automatically) and **Ask Doubt** (general Q&A)
+- Apply Fix button — extracts corrected code from AI response and pushes it directly into the editor
+- Conversation history maintained per session
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Layer | Technology |
+| Category | Technology |
 | :--- | :--- |
-| **Frontend** | React 19, Vite, MUI (Material UI) |
-| **Editor** | Monaco Editor (@monaco-editor/react) |
-| **AI Integration** | Tambo AI SDK, Groq SDK |
-| **Styling** | Emotion, Styled Components |
-| **Formatting** | Prettier, JS-Beautify |
-| **Execution** | OneCompiler API |
-| **Animation** | Canvas-Confetti, CSS Transitions |
+| Framework | React 19, Vite |
+| UI Components | Material UI (MUI v5) |
+| Editor | Monaco Editor via `@monaco-editor/react` |
+| Code Execution | OneCompiler Embed API |
+| AI SDK | Tambo AI (`@tambo-ai/react`) |
+| LLM Backend | Groq SDK (`groq-sdk`) — llama-3.3-70b-versatile |
+| Formatting | Prettier (browser standalone) |
+| Animation | canvas-confetti |
+| Styling | Emotion, MUI `sx` props |
 
 ---
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+
+- Node.js v18 or higher
+- npm
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-    git clone https://github.com/SoumyaEXE/CodePad.git
-    cd CodePad/codepad-app
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/SoumyaEXE/CodePad.git
+cd CodePad/codepad-app
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Configure Environment Variables**
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_OC_API_KEY=your_onecompiler_api_key
-   VITE_TAMBO_API_KEY=your_tambo_api_key
-   VITE_GROQ_API_KEY=your_groq_api_key
-   ```
+# 3. Create environment file
+cp .env.example .env
+```
 
-4. **Launch the development server**
-   ```bash
-   npm run dev
-   ```
+Open `.env` and fill in your keys:
+
+```env
+VITE_TAMBO_API_KEY=your_tambo_api_key
+VITE_GROQ_API_KEY=your_groq_api_key
+```
+
+```bash
+# 4. Start development server
+npm run dev
+```
+
+### Getting API Keys
+
+| Key | Where to get it |
+| :--- | :--- |
+| `VITE_TAMBO_API_KEY` | [tambo.ai](https://tambo.ai) → Settings → API Keys |
+| `VITE_GROQ_API_KEY` | [console.groq.com](https://console.groq.com) → API Keys |
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
-```text
+```
 codepad-app/
 ├── src/
-│   ├── components/       # UI Components (Editor, Sidebar, AISidebar)
-│   ├── hooks/            # Custom logic (useCodeExecution, useAI)
-│   ├── utils/            # Helper functions & Language Registry
-│   ├── assets/           # Static assets & images
-│   └── main.jsx          # App entry point
-├── public/               # Public assets
-├── .env                  # Environment secrets
-└── vite.config.js        # Vite configuration
+│   ├── components/
+│   │   ├── Editor.jsx          # Monaco editor + iframe logic + postMessage handlers
+│   │   ├── Navbar.jsx          # Top bar with Run, Format, theme toggle
+│   │   ├── AISidebar.jsx       # AI assistant panel
+│   │   ├── ChatBubble.jsx      # Message rendering with markdown + syntax highlighting
+│   │   └── StatusBar.jsx       # Bottom bar with save and run status
+│   ├── hooks/
+│   │   ├── useConfetti.js      # Confetti trigger on execution success
+│   │   └── useFileSystem.js    # localStorage persistence logic
+│   ├── lib/
+│   │   ├── groq.js             # Groq client configuration
+│   │   └── systemPrompts.js    # AI system prompts for Fix and Doubt modes
+│   ├── theme.js                # MUI light and dark theme config
+│   └── main.jsx                # App entry point with TamboProvider
+├── .env.example
+└── vite.config.js
 ```
 
 ---
 
-## 🤝 Contributing
+## Format Code — Technical Notes
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+The Format button works fully for **JavaScript and TypeScript** via Prettier's browser standalone build.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+For Python, C, C++, and Java — full AST-based formatting was not achievable due to the following constraints encountered during development:
 
----
+- **Piston API** (emkc.org) — initially used to run Black formatter for Python. Returned HTTP 401 after free tier restrictions changed. Removed to prevent runtime failures.
+- **Prettier** — by design only supports JS, TS, HTML, and CSS. No support for systems languages.
+- **WebAssembly formatters** (e.g. clang-format via WASM) — binary bundle size exceeds 40MB, unsuitable for static hosting.
+- **Server-side formatting** — requires a backend, which is outside the scope of a static frontend deployment.
 
-## 📜 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+For unsupported languages, the formatter applies a best-effort client-side cleanup: tab-to-space normalization, trailing whitespace removal, blank line collapsing, and brace-based indentation correction for C-style languages.
 
 ---
 
-<div align="center">
+## Deployment
 
-**Built with ❤️ for the Developer Community.**
+The app is a fully static Vite build and can be deployed to any static hosting provider.
 
-[Github](https://github.com/SoumyaEXE/CodePad) • [Website](https://code.isoumya.xyz/) • [Author](https://github.com/SoumyaEXE)
+```bash
+npm run build
+# Output is in the dist/ folder
+```
 
-</div>
+---
 
-<!-- SEO Keywords: AI Code Editor, Online IDE, React Monaco Editor, Cloud Execution, Programming Assistant, Web Development Tools -->
+## License
+
+MIT License. See [LICENSE](./LICENSE) for details.
+
+---
+
+*Built by [Soumyadeep](https://github.com/SoumyaEXE)*
