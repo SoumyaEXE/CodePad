@@ -13,7 +13,7 @@ export default function ChatInput({ onSend, isLoading }) {
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
-    el.style.height = '0';
+    el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 100) + 'px';
   }, [value]);
 
@@ -74,6 +74,8 @@ export default function ChatInput({ onSend, isLoading }) {
               color: ${isDark ? '#52525b' : '#a1a1aa'};
               opacity: 1;
             }
+            .ai-chat-input::-webkit-scrollbar { display: none; }
+            .ai-chat-input { scrollbar-width: none; -ms-overflow-style: none; }
           `}</style>
         <textarea
           ref={textareaRef}
@@ -94,7 +96,9 @@ export default function ChatInput({ onSend, isLoading }) {
             lineHeight: '1.5',
             fontFamily: "'Inter', sans-serif",
             padding: '4px 0',
+            minHeight: 24,
             maxHeight: 100,
+            overflow: 'hidden',
           }}
         />
       </Box>

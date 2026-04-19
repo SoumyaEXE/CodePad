@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, useTheme } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomOneDark, atomOneLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import CheckIcon from '@mui/icons-material/Check';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-// Define the "Apply Fix" button specifically for AI code blocks if enabled
+/* ── Code Block with language label + copy button ─────────── */
 function CodeBlock({ inline, className, children, canApplyFix, onApplyFix, isDark, ...props }) {
   const [applied, setApplied] = useState(false);
+  const [copied, setCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || '');
   const codeContent = String(children).replace(/\n$/, '');
 
@@ -17,20 +20,76 @@ function CodeBlock({ inline, className, children, canApplyFix, onApplyFix, isDar
     setTimeout(() => setApplied(false), 2000);
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(codeContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+
   if (!inline && match) {
+    const lang = match[1];
     return (
-      <Box sx={{ my: 1, position: 'relative' }}>
-        <Box sx={{ borderRadius: '6px', overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+      <Box sx={{ my: 1.5, position: 'relative' }}>
+        <Box sx={{
+          borderRadius: '8px',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(139, 92, 246, 0.25)' : 'rgba(124, 58, 237, 0.15)',
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(15,15,25,0.95), rgba(20,16,36,0.95))'
+            : 'rgba(249, 246, 255, 0.9)',
+        }}>
+          {/* Language label bar */}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 1.25,
+            py: 0.5,
+            borderBottom: '1px solid',
+            borderColor: isDark ? 'rgba(139, 92, 246, 0.15)' : 'rgba(124, 58, 237, 0.1)',
+            background: isDark ? 'rgba(139, 92, 246, 0.06)' : 'rgba(124, 58, 237, 0.04)',
+          }}>
+            <Typography sx={{
+              fontSize: 10,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: isDark ? '#a78bfa' : '#7c3aed',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}>
+              {lang}
+            </Typography>
+            <Button
+              size="small"
+              onClick={handleCopy}
+              startIcon={copied ? <CheckIcon sx={{ fontSize: '12px !important' }} /> : <ContentCopyIcon sx={{ fontSize: '12px !important' }} />}
+              sx={{
+                fontSize: 10,
+                textTransform: 'none',
+                py: 0,
+                px: 0.75,
+                minWidth: 'auto',
+                color: copied ? '#34d399' : (isDark ? '#8b8ba0' : '#6b7280'),
+                '&:hover': { color: isDark ? '#c4b5fd' : '#7c3aed', background: 'transparent' },
+              }}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </Box>
           <SyntaxHighlighter
             style={isDark ? atomOneDark : atomOneLight}
-            language={match[1]}
+            language={lang}
             PreTag="div"
             customStyle={{
               margin: 0,
-              padding: '12px',
+              padding: '14px',
               fontSize: '12px',
               fontFamily: "'JetBrains Mono', monospace",
               background: 'transparent',
+              lineHeight: 1.7,
             }}
             {...props}
           >
@@ -38,7 +97,7 @@ function CodeBlock({ inline, className, children, canApplyFix, onApplyFix, isDar
           </SyntaxHighlighter>
         </Box>
         {canApplyFix && (
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-start' }}>
+          <Box sx={{ mt: 0.75, display: 'flex', justifyContent: 'flex-start' }}>
             <Button
               variant="outlined"
               size="small"
@@ -49,31 +108,351 @@ function CodeBlock({ inline, className, children, canApplyFix, onApplyFix, isDar
                 fontSize: 11,
                 textTransform: 'none',
                 py: 0.25,
-                borderColor: applied ? 'success.main' : 'divider',
-                color: applied ? 'success.main' : 'text.secondary',
+                px: 1.25,
+                borderRadius: '6px',
+                borderColor: applied ? 'success.main' : (isDark ? 'rgba(139,92,246,0.3)' : 'rgba(124,58,237,0.2)'),
+                color: applied ? 'success.main' : (isDark ? '#c4b5fd' : '#7c3aed'),
+                '&:hover': {
+                  borderColor: isDark ? '#a78bfa' : '#7c3aed',
+                  bgcolor: isDark ? 'rgba(139,92,246,0.08)' : 'rgba(124,58,237,0.05)',
+                },
               }}
             >
-              {applied ? 'Applied' : 'Apply Fix'}
+              {applied ? 'Applied' : '✨ Apply Fix'}
             </Button>
           </Box>
         )}
       </Box>
     );
   }
-  
-  // Inline code styling
+
+  // Inline code — vivid highlighted
   return (
     <code className={className} {...props} style={{
-      background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-      padding: '2px 4px',
+      background: isDark
+        ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(167, 139, 250, 0.15))'
+        : 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(139, 92, 246, 0.08))',
+      color: isDark ? '#c4b5fd' : '#6d28d9',
+      padding: '2px 6px',
       borderRadius: '4px',
       fontFamily: "'JetBrains Mono', monospace",
-      fontSize: '12px'
+      fontSize: '11.5px',
+      fontWeight: 500,
+      border: `1px solid ${isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(124, 58, 237, 0.12)'}`,
     }}>
       {children}
     </code>
   );
 }
+
+/* ── Markdown component overrides ─────────────────────────── */
+
+function buildMarkdownComponents(isDark, canApplyFix, onApplyFix) {
+  const accent = isDark ? '#a78bfa' : '#7c3aed';
+  const accentLight = isDark ? '#c4b5fd' : '#6d28d9';
+  const accentSubtle = isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(124, 58, 237, 0.06)';
+
+  return {
+    code(props) {
+      return <CodeBlock {...props} isDark={isDark} canApplyFix={canApplyFix} onApplyFix={onApplyFix} />;
+    },
+
+    /* ── Headings with gradient accent ── */
+    h1({ children }) {
+      return (
+        <Typography component="h1" sx={{
+          fontSize: 18,
+          fontWeight: 700,
+          mt: 1.5,
+          mb: 1,
+          background: isDark
+            ? 'linear-gradient(135deg, #c4b5fd, #a78bfa, #818cf8)'
+            : 'linear-gradient(135deg, #6d28d9, #7c3aed, #6366f1)',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          lineHeight: 1.3,
+          letterSpacing: '-0.01em',
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          {children}
+        </Typography>
+      );
+    },
+    h2({ children }) {
+      return (
+        <Typography component="h2" sx={{
+          fontSize: 15,
+          fontWeight: 700,
+          mt: 1.5,
+          mb: 0.75,
+          color: accentLight,
+          lineHeight: 1.35,
+          letterSpacing: '-0.005em',
+          fontFamily: "'Inter', sans-serif",
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+          '&::before': {
+            content: '""',
+            width: 3,
+            height: '1em',
+            borderRadius: 2,
+            background: `linear-gradient(180deg, ${accent}, transparent)`,
+            flexShrink: 0,
+          },
+        }}>
+          {children}
+        </Typography>
+      );
+    },
+    h3({ children }) {
+      return (
+        <Typography component="h3" sx={{
+          fontSize: 13.5,
+          fontWeight: 650,
+          mt: 1.25,
+          mb: 0.5,
+          color: isDark ? '#d8ccfa' : '#5b21b6',
+          lineHeight: 1.35,
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          {children}
+        </Typography>
+      );
+    },
+
+    /* ── Paragraphs ── */
+    p({ children }) {
+      return (
+        <Typography component="p" sx={{
+          fontSize: 12.5,
+          lineHeight: 1.7,
+          mt: 0,
+          mb: 0.75,
+          color: 'text.primary',
+          fontFamily: "'Inter', sans-serif",
+          '&:last-child': { mb: 0 },
+        }}>
+          {children}
+        </Typography>
+      );
+    },
+
+    /* ── Strong / Bold ── */
+    strong({ children }) {
+      return (
+        <Box component="strong" sx={{
+          fontWeight: 650,
+          color: isDark ? '#e0d4fd' : '#4c1d95',
+        }}>
+          {children}
+        </Box>
+      );
+    },
+
+    /* ── Emphasis / Italic ── */
+    em({ children }) {
+      return (
+        <Box component="em" sx={{
+          fontStyle: 'italic',
+          color: isDark ? '#c4b5fd' : '#6d28d9',
+        }}>
+          {children}
+        </Box>
+      );
+    },
+
+    /* ── Links ── */
+    a({ href, children }) {
+      return (
+        <Box
+          component="a"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            color: isDark ? '#a78bfa' : '#7c3aed',
+            textDecoration: 'none',
+            borderBottom: `1px solid ${isDark ? 'rgba(167, 139, 250, 0.3)' : 'rgba(124, 58, 237, 0.2)'}`,
+            transition: 'all 150ms ease',
+            fontWeight: 500,
+            '&:hover': {
+              color: isDark ? '#c4b5fd' : '#5b21b6',
+              borderBottomColor: isDark ? '#c4b5fd' : '#5b21b6',
+            },
+          }}
+        >
+          {children}
+        </Box>
+      );
+    },
+
+    /* ── Unordered list ── */
+    ul({ children }) {
+      return (
+        <Box component="ul" sx={{
+          pl: 0,
+          my: 0.75,
+          listStyle: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.25,
+        }}>
+          {children}
+        </Box>
+      );
+    },
+
+    /* ── Ordered list ── */
+    ol({ children }) {
+      return (
+        <Box component="ol" sx={{
+          pl: 0,
+          my: 0.75,
+          listStyle: 'none',
+          counterReset: 'md-ol',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.25,
+        }}>
+          {children}
+        </Box>
+      );
+    },
+
+    /* ── List items with colored bullet/number ── */
+    li({ children, node }) {
+      const isOrdered = node?.parentNode?.tagName === 'ol';
+      return (
+        <Box component="li" sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 0.75,
+          fontSize: 12.5,
+          lineHeight: 1.7,
+          color: 'text.primary',
+          fontFamily: "'Inter', sans-serif",
+          ...(isOrdered && {
+            counterIncrement: 'md-ol',
+          }),
+          '&::before': isOrdered
+            ? {
+                content: 'counter(md-ol) "."',
+                color: accent,
+                fontWeight: 700,
+                fontSize: 12,
+                fontFamily: "'JetBrains Mono', monospace",
+                minWidth: '18px',
+                flexShrink: 0,
+                mt: '1px',
+              }
+            : {
+                content: '"•"',
+                color: accent,
+                fontWeight: 700,
+                fontSize: 14,
+                lineHeight: '1.55',
+                minWidth: '12px',
+                flexShrink: 0,
+              },
+        }}>
+          <Box component="span" sx={{ flex: 1 }}>{children}</Box>
+        </Box>
+      );
+    },
+
+    /* ── Blockquote ── */
+    blockquote({ children }) {
+      return (
+        <Box sx={{
+          borderLeft: `3px solid ${accent}`,
+          background: accentSubtle,
+          pl: 1.5,
+          pr: 1,
+          py: 0.75,
+          my: 1,
+          borderRadius: '0 6px 6px 0',
+          '& p': { mb: '0 !important' },
+        }}>
+          {children}
+        </Box>
+      );
+    },
+
+    /* ── Horizontal rule ── */
+    hr() {
+      return (
+        <Box sx={{
+          my: 1.5,
+          height: '1px',
+          border: 'none',
+          background: isDark
+            ? 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(124,58,237,0.15), transparent)',
+        }} />
+      );
+    },
+
+    /* ── Table ── */
+    table({ children }) {
+      return (
+        <Box sx={{ overflowX: 'auto', my: 1 }}>
+          <Box component="table" sx={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: 11.5,
+            fontFamily: "'Inter', sans-serif",
+            border: `1px solid ${isDark ? 'rgba(139,92,246,0.2)' : 'rgba(124,58,237,0.12)'}`,
+            borderRadius: '6px',
+            overflow: 'hidden',
+          }}>
+            {children}
+          </Box>
+        </Box>
+      );
+    },
+    thead({ children }) {
+      return (
+        <Box component="thead" sx={{
+          background: isDark ? 'rgba(139,92,246,0.08)' : 'rgba(124,58,237,0.04)',
+          '& th': {
+            px: 1,
+            py: 0.5,
+            textAlign: 'left',
+            fontWeight: 650,
+            color: accentLight,
+            borderBottom: `1px solid ${isDark ? 'rgba(139,92,246,0.2)' : 'rgba(124,58,237,0.12)'}`,
+          },
+        }}>
+          {children}
+        </Box>
+      );
+    },
+    tbody({ children }) {
+      return (
+        <Box component="tbody" sx={{
+          '& td': {
+            px: 1,
+            py: 0.4,
+            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+            color: 'text.primary',
+          },
+          '& tr:last-child td': { borderBottom: 'none' },
+          '& tr:hover': {
+            background: isDark ? 'rgba(139,92,246,0.04)' : 'rgba(124,58,237,0.02)',
+          },
+        }}>
+          {children}
+        </Box>
+      );
+    },
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  CHAT BUBBLE                                               */
+/* ═══════════════════════════════════════════════════════════ */
 
 export default function ChatBubble({ role, content, canApplyFix, onApplyFix }) {
   const theme = useTheme();
@@ -86,16 +465,21 @@ export default function ChatBubble({ role, content, canApplyFix, onApplyFix }) {
         <Box
           sx={{
             maxWidth: '85%',
-            bgcolor: isDark ? '#7c3aed' : '#6d28d9',
+            background: isDark
+              ? 'linear-gradient(135deg, #7c3aed, #6d28d9)'
+              : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
             color: '#fff',
             px: 1.5,
             py: 1,
             borderRadius: '10px 10px 2px 10px',
-            fontSize: 12,
+            fontSize: 12.5,
             lineHeight: 1.55,
             fontFamily: "'Inter', sans-serif",
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
+            boxShadow: isDark
+              ? '0 2px 8px rgba(124, 58, 237, 0.25)'
+              : '0 2px 8px rgba(124, 58, 237, 0.2)',
           }}
         >
           {content}
@@ -105,38 +489,38 @@ export default function ChatBubble({ role, content, canApplyFix, onApplyFix }) {
   }
 
   // AI bubble
+  const components = buildMarkdownComponents(isDark, canApplyFix, onApplyFix);
+
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1.5 }}>
       <Box
         sx={{
-          maxWidth: '90%',
-          bgcolor: 'background.paper',
+          maxWidth: '92%',
+          bgcolor: isDark ? 'rgba(22, 18, 36, 0.7)' : 'rgba(250, 248, 255, 0.9)',
           border: '1px solid',
-          borderColor: 'divider',
-          px: 1.5,
-          py: 1,
+          borderColor: isDark ? 'rgba(139, 92, 246, 0.12)' : 'rgba(124, 58, 237, 0.08)',
+          px: 1.75,
+          py: 1.25,
           borderRadius: '10px 10px 10px 2px',
-          fontSize: 12,
-          lineHeight: 1.55,
+          fontSize: 12.5,
+          lineHeight: 1.7,
           fontFamily: "'Inter', sans-serif",
           color: 'text.primary',
           wordBreak: 'break-word',
+          backdropFilter: 'blur(8px)',
+          boxShadow: isDark
+            ? '0 1px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(139,92,246,0.05)'
+            : '0 1px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(124,58,237,0.03)',
         }}
       >
-        <Box sx={{ 
-            '& p': { mt: 0, mb: 0.75, '&:last-child': { mb: 0 } },
-            '& pre': { m: 0 }
-          }}>
-            <ReactMarkdown
-              components={{
-                code(props) {
-                  return <CodeBlock {...props} isDark={isDark} canApplyFix={canApplyFix} onApplyFix={onApplyFix} />;
-                }
-              }}
-            >
-              {content}
-            </ReactMarkdown>
-          </Box>
+        <Box sx={{ '& pre': { m: 0 } }}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={components}
+          >
+            {content}
+          </ReactMarkdown>
+        </Box>
       </Box>
     </Box>
   );

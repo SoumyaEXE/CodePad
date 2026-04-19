@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { ThemeProvider, CssBaseline, Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 
 import { getTheme } from './theme';
 import Navbar from './components/Navbar';
@@ -18,22 +18,104 @@ import { useCodeExecution } from './hooks/useCodeExecution';
 import { useEditorSettings } from './hooks/useEditorSettings';
 import { getLanguageFromExtension } from './utils/languages';
 
-/* ── Thin resize handle (no 3D) ───────────────────── */
+/* ── Sidebar resize handle with collapse button ───── */
 
-function ResizeHandle({ onMouseDown }) {
+function SidebarResizeHandle({ onMouseDown, onCollapse }) {
   return (
     <Box
-      onMouseDown={onMouseDown}
       sx={{
-        width: 3,
+        width: 12,
         cursor: 'col-resize',
         flexShrink: 0,
-        bgcolor: 'divider',
-        opacity: 0.3,
-        transition: 'opacity 120ms ease',
-        '&:hover': { opacity: 1 },
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        position: 'relative',
+        bgcolor: 'transparent',
+        transition: 'background-color 120ms ease',
+        '&:hover': { bgcolor: 'action.hover' },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: '50%',
+          width: '1px',
+          bgcolor: 'divider',
+          opacity: 0.4,
+          transform: 'translateX(-50%)',
+        },
       }}
-    />
+      onMouseDown={onMouseDown}
+    >
+      <Tooltip title="Collapse sidebar (Ctrl+B)" arrow placement="right">
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); onCollapse(); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          sx={{
+            mt: 0.5,
+            width: 16,
+            height: 16,
+            p: 0,
+            borderRadius: '4px',
+            color: 'text.disabled',
+            zIndex: 1,
+            transition: 'all 120ms ease',
+            '&:hover': {
+              color: 'primary.main',
+              bgcolor: 'action.selected',
+            },
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M7 1.5L3 5l4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+}
+
+/* ── Thin strip to re-open sidebar when collapsed ──── */
+
+function SidebarOpenStrip({ onOpen }) {
+  return (
+    <Tooltip title="Open sidebar (Ctrl+B)" arrow placement="right">
+      <Box
+        onClick={onOpen}
+        sx={{
+          width: 14,
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          cursor: 'pointer',
+          bgcolor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          transition: 'all 120ms ease',
+          '&:hover': {
+            bgcolor: 'action.hover',
+            '& .open-chevron': { color: 'primary.main' },
+          },
+        }}
+      >
+        <Box
+          className="open-chevron"
+          sx={{
+            mt: 1,
+            color: 'text.disabled',
+            transition: 'color 120ms ease',
+            display: 'flex',
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M3 1.5L7 5l-4 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Box>
+      </Box>
+    </Tooltip>
   );
 }
 
@@ -363,12 +445,15 @@ export default function App() {
           onToggleSidebar={toggleSidebar}
           onNewProject={() => setNewProjectOpen(true)}
           onSettings={() => setSettingsModalOpen(true)}
+          activeFile={activeFile}
+          activeContent={activeContent}
+          files={files}
         />
 
         {/* Main area */}
         <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
           {/* Sidebar */}
-          {sidebarOpen && (
+          {sidebarOpen ? (
             <>
               <Sidebar
                 width={sidebarWidth}
@@ -385,8 +470,10 @@ export default function App() {
                 darkMode={darkMode}
                 onToggleDarkMode={toggleDarkMode}
               />
-              <ResizeHandle onMouseDown={startSidebarDrag} />
+              <SidebarResizeHandle onMouseDown={startSidebarDrag} onCollapse={toggleSidebar} />
             </>
+          ) : (
+            <SidebarOpenStrip onOpen={toggleSidebar} />
           )}
 
           {/* Editor + Output area */}
