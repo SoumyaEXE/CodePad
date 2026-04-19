@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/onecompiler/(.*)",
+      "destination": "https://api.onecompiler.com/$1"
+    }
+  ]
+}
