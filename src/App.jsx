@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { ThemeProvider, CssBaseline, Box, IconButton, Menu, MenuItem, Tooltip, Typography, useTheme } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, IconButton, Menu, MenuItem, Tooltip, Typography, useTheme, useMediaQuery } from '@mui/material';
 
 import { getTheme } from './theme';
 import Navbar from './components/Navbar';
@@ -303,6 +303,98 @@ function PanelResizeHandle({ onMouseDown }) {
   );
 }
 
+/* ── Mobile Bottom Tab Bar ─────────────────────── */
+
+function MobileBottomTabs({ activeTab, onSelectTab, isDark }) {
+  const tabs = [
+    {
+      id: 'files',
+      label: 'Files',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+          <polyline points="13 2 13 9 20 9" />
+        </svg>
+      ),
+    },
+    {
+      id: 'code',
+      label: 'Code',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </svg>
+      ),
+    },
+    {
+      id: 'output',
+      label: 'Output',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <polyline points="4 17 10 11 4 5" />
+          <line x1="12" y1="19" x2="20" y2="19" />
+        </svg>
+      ),
+    },
+    {
+      id: 'ai',
+      label: 'AI',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        height: 52,
+        bgcolor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        flexShrink: 0,
+        position: 'relative',
+        zIndex: 10,
+      }}
+    >
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
+          <Box
+            key={tab.id}
+            onClick={() => onSelectTab(tab.id)}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.15,
+              flex: 1,
+              py: 0.5,
+              cursor: 'pointer',
+              color: isActive ? 'primary.main' : 'text.disabled',
+              transition: 'color 120ms ease',
+              userSelect: 'none',
+              '&:active': { opacity: 0.7 },
+            }}
+          >
+            {tab.icon}
+            <Typography sx={{ fontSize: 9.5, fontWeight: isActive ? 600 : 400, lineHeight: 1 }}>
+              {tab.label}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
 /* ═══════════════════════════════════════════════════ */
 
 export default function App() {
@@ -339,6 +431,10 @@ export default function App() {
   const toggleSidebar = useCallback(() => {
     setActivePanel((prev) => prev ? null : 'explorer');
   }, []);
+
+  /* ── mobile detection + tab ──────────────────── */
+  const isMobile = useMediaQuery('(max-width:768px)');
+  const [mobileTab, setMobileTab] = useState('code');
 
   /* ── resizable panel widths ────────────────────── */
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -601,6 +697,12 @@ export default function App() {
 
 
 
+  /* ── mobile-aware file open ──────────────────── */
+  const handleMobileOpenFile = useCallback((file) => {
+    openFile(file);
+    if (isMobile) setMobileTab('code');
+  }, [openFile, isMobile]);
+
   /* ── render ────────────────────────────────────── */
   const [appReady, setAppReady] = useState(false);
 
@@ -609,16 +711,9 @@ export default function App() {
       <CssBaseline />
       <Preloader onFinish={() => setAppReady(true)} />
 
-      {/* Drag overlay — blocks iframe from stealing mouse events */}
+      {/* Drag overlay */}
       {isDragging && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            cursor: 'col-resize',
-          }}
-        />
+        <Box sx={{ position: 'fixed', inset: 0, zIndex: 9999, cursor: 'col-resize' }} />
       )}
 
       <Box
@@ -643,124 +738,64 @@ export default function App() {
           activeFile={activeFile}
           activeContent={activeContent}
           files={files}
+          isMobile={isMobile}
         />
 
-        {/* Main area */}
-        <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
-          {/* Activity Bar — always visible like VS Code */}
-          <ActivityBar activePanel={activePanel} onSelectPanel={handleSelectPanel} />
+        {/* ═══ MOBILE LAYOUT ═══ */}
+        {isMobile ? (
+          <>
+            <Box sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {/* Files tab */}
+              {mobileTab === 'files' && (
+                <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                  <Sidebar
+                    width="100%"
+                    files={files}
+                    folders={folders}
+                    activeFile={activeFile}
+                    onOpenFile={handleMobileOpenFile}
+                    onCreateFile={createFile}
+                    onCreateFolder={createFolder}
+                    onDeleteFile={handleDeleteFile}
+                    onRenameFile={renameFile}
+                    onDeleteFolder={deleteFolder}
+                    onUploadFile={uploadFile}
+                    darkMode={darkMode}
+                    onToggleDarkMode={toggleDarkMode}
+                  />
+                </Box>
+              )}
 
-          {/* Explorer panel */}
-          {activePanel === 'explorer' && (
-            <>
-              <Sidebar
-                width={sidebarWidth}
-                files={files}
-                folders={folders}
-                activeFile={activeFile}
-                onOpenFile={openFile}
-                onCreateFile={createFile}
-                onCreateFolder={createFolder}
-                onDeleteFile={handleDeleteFile}
-                onRenameFile={renameFile}
-                onDeleteFolder={deleteFolder}
-                onUploadFile={uploadFile}
-                darkMode={darkMode}
-                onToggleDarkMode={toggleDarkMode}
-              />
-              <PanelResizeHandle onMouseDown={startSidebarDrag} />
-            </>
-          )}
+              {/* Code tab */}
+              {mobileTab === 'code' && (
+                <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <FileTabs
+                    openTabs={openTabs}
+                    activeFile={activeFile}
+                    onSelectTab={setActiveFile}
+                    onCloseTab={closeTab}
+                    onRun={handleRun}
+                    isRunning={isRunning}
+                    showOutput={showOutput}
+                    onToggleOutput={() => setMobileTab('output')}
+                  />
+                  <CodeEditor
+                    value={activeContent}
+                    language={activeLanguage}
+                    darkMode={darkMode}
+                    settings={settings}
+                    onChange={handleContentChange}
+                    onCursorChange={setCursorPos}
+                  />
+                </Box>
+              )}
 
-          {/* Search panel */}
-          {activePanel === 'search' && (
-            <>
-              <SearchPanel
-                width={sidebarWidth}
-                files={files}
-                onOpenFile={openFile}
-              />
-              <PanelResizeHandle onMouseDown={startSidebarDrag} />
-            </>
-          )}
-
-          {/* Editor + Output area */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              flexGrow: 1,
-              overflow: 'hidden',
-              minWidth: 0,
-            }}
-          >
-            {/* Tab bar */}
-            <FileTabs
-              openTabs={openTabs}
-              activeFile={activeFile}
-              onSelectTab={setActiveFile}
-              onCloseTab={closeTab}
-              onRun={handleRun}
-              isRunning={isRunning}
-              showOutput={showOutput}
-              onToggleOutput={() => setShowOutput((p) => !p)}
-            />
-
-            {/* Editor + Output split */}
-            <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0, overflow: 'hidden' }}>
-                <CodeEditor
-                  value={activeContent}
-                  language={activeLanguage}
-                  darkMode={darkMode}
-                  settings={settings}
-                  onChange={handleContentChange}
-                  onCursorChange={setCursorPos}
-                />
-              </Box>
-
-              {showOutput && (
-                <>
-                  {/* Resize gutter with editor 3-dot at top */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      flexShrink: 0,
-                      width: 14,
-                      cursor: 'col-resize',
-                      bgcolor: 'divider',
-                      opacity: 0.3,
-                      transition: 'opacity 120ms ease',
-                      '&:hover': { opacity: 1 },
-                    }}
-                    onMouseDown={startOutputDrag}
-                  >
-                    <IconButton
-                      size="small"
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); setEditorMenuAnchor(e.currentTarget); }}
-                      sx={{
-                        p: 0.2,
-                        mt: 0.25,
-                        color: 'text.secondary',
-                        '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
-                        borderRadius: '4px',
-                        zIndex: 1,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <circle cx="5" cy="1.5" r="1" fill="currentColor" />
-                        <circle cx="5" cy="5" r="1" fill="currentColor" />
-                        <circle cx="5" cy="8.5" r="1" fill="currentColor" />
-                      </svg>
-                    </IconButton>
-                  </Box>
+              {/* Output tab */}
+              {mobileTab === 'output' && (
+                <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                   <OutputPanel
                     ref={outputPanelRef}
-                    width={outputWidth}
+                    width="100%"
                     output={output}
                     isRunning={isRunning}
                     stdin={stdin}
@@ -772,23 +807,157 @@ export default function App() {
                     workspace={aiWorkspace}
                     actions={aiActions}
                   />
-                </>
+                </Box>
+              )}
+
+              {/* AI tab */}
+              {mobileTab === 'ai' && (
+                <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <AISidebar
+                    activeContent={activeContent}
+                    onApplyFix={handleContentChange}
+                    workspace={aiWorkspace}
+                    actions={aiActions}
+                  />
+                </Box>
               )}
             </Box>
-          </Box>
-        </Box>
 
-        {/* Status bar */}
-        <StatusBar
-          runStatus={runStatus}
-          output={output}
-          cursorPosition={cursorPos}
-          language={activeLanguage}
-          activeFile={activeFile}
-          fileContent={activeContent}
-          showSaved={showSaved}
-          onLanguageClick={() => setLangModalOpen(true)}
-        />
+            {/* Mobile bottom tab bar */}
+            <MobileBottomTabs
+              activeTab={mobileTab}
+              onSelectTab={setMobileTab}
+              isDark={darkMode}
+            />
+          </>
+        ) : (
+          /* ═══ DESKTOP LAYOUT ═══ */
+          <>
+            {/* Main area */}
+            <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+              {/* Activity Bar */}
+              <ActivityBar activePanel={activePanel} onSelectPanel={handleSelectPanel} />
+
+              {/* Explorer panel */}
+              {activePanel === 'explorer' && (
+                <>
+                  <Sidebar
+                    width={sidebarWidth}
+                    files={files}
+                    folders={folders}
+                    activeFile={activeFile}
+                    onOpenFile={openFile}
+                    onCreateFile={createFile}
+                    onCreateFolder={createFolder}
+                    onDeleteFile={handleDeleteFile}
+                    onRenameFile={renameFile}
+                    onDeleteFolder={deleteFolder}
+                    onUploadFile={uploadFile}
+                    darkMode={darkMode}
+                    onToggleDarkMode={toggleDarkMode}
+                  />
+                  <PanelResizeHandle onMouseDown={startSidebarDrag} />
+                </>
+              )}
+
+              {/* Search panel */}
+              {activePanel === 'search' && (
+                <>
+                  <SearchPanel
+                    width={sidebarWidth}
+                    files={files}
+                    onOpenFile={openFile}
+                  />
+                  <PanelResizeHandle onMouseDown={startSidebarDrag} />
+                </>
+              )}
+
+              {/* Editor + Output area */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', minWidth: 0 }}>
+                <FileTabs
+                  openTabs={openTabs}
+                  activeFile={activeFile}
+                  onSelectTab={setActiveFile}
+                  onCloseTab={closeTab}
+                  onRun={handleRun}
+                  isRunning={isRunning}
+                  showOutput={showOutput}
+                  onToggleOutput={() => setShowOutput((p) => !p)}
+                />
+
+                <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0, overflow: 'hidden' }}>
+                    <CodeEditor
+                      value={activeContent}
+                      language={activeLanguage}
+                      darkMode={darkMode}
+                      settings={settings}
+                      onChange={handleContentChange}
+                      onCursorChange={setCursorPos}
+                    />
+                  </Box>
+
+                  {showOutput && (
+                    <>
+                      <Box
+                        sx={{
+                          display: 'flex', flexDirection: 'column', alignItems: 'center',
+                          flexShrink: 0, width: 14, cursor: 'col-resize',
+                          bgcolor: 'divider', opacity: 0.3, transition: 'opacity 120ms ease',
+                          '&:hover': { opacity: 1 },
+                        }}
+                        onMouseDown={startOutputDrag}
+                      >
+                        <IconButton
+                          size="small"
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => { e.stopPropagation(); setEditorMenuAnchor(e.currentTarget); }}
+                          sx={{
+                            p: 0.2, mt: 0.25, color: 'text.secondary',
+                            '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                            borderRadius: '4px', zIndex: 1, cursor: 'pointer',
+                          }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <circle cx="5" cy="1.5" r="1" fill="currentColor" />
+                            <circle cx="5" cy="5" r="1" fill="currentColor" />
+                            <circle cx="5" cy="8.5" r="1" fill="currentColor" />
+                          </svg>
+                        </IconButton>
+                      </Box>
+                      <OutputPanel
+                        ref={outputPanelRef}
+                        width={outputWidth}
+                        output={output}
+                        isRunning={isRunning}
+                        stdin={stdin}
+                        onStdinChange={setStdin}
+                        onClearOutput={clearOutput}
+                        language={activeLanguage}
+                        fileContent={activeContent}
+                        onApplyFix={handleContentChange}
+                        workspace={aiWorkspace}
+                        actions={aiActions}
+                      />
+                    </>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Status bar — desktop only */}
+            <StatusBar
+              runStatus={runStatus}
+              output={output}
+              cursorPosition={cursorPos}
+              language={activeLanguage}
+              activeFile={activeFile}
+              fileContent={activeContent}
+              showSaved={showSaved}
+              onLanguageClick={() => setLangModalOpen(true)}
+            />
+          </>
+        )}
       </Box>
 
       {/* Language selector modal */}

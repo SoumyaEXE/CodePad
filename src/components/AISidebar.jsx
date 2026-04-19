@@ -5,6 +5,7 @@ import ChatBubble from './ChatBubble';
 import ChatInput from './ChatInput';
 import FileProposalCard from './FileProposalCard';
 import { groqClient, MODEL } from '../lib/groq';
+import { aiLimiter } from '../utils/rateLimit';
 import {
   buildWorkspaceSnapshot,
   buildGroqTools,
@@ -249,6 +250,14 @@ export default function AISidebar({
   const handleSend = useCallback(async (text) => {
     const prompt = text.trim();
     if (!prompt) return;
+
+    /* Rate limit check */
+    const { allowed, retryAfterMs } = aiLimiter.canCall();
+    if (!allowed) {
+      setError(`Rate limited — try again in ${Math.ceil(retryAfterMs / 1000)}s`);
+      return;
+    }
+    aiLimiter.record();
 
     const userMsg = createMessage('user', prompt);
     setMessages((prev) => [...prev, userMsg]);
