@@ -162,7 +162,7 @@ export default function Navbar({
         {/* Right actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Button
+            {/* <Button
               size="small"
               variant="outlined"
               onClick={() => {
@@ -185,7 +185,7 @@ export default function Navbar({
               }}
             >
               Format
-            </Button>
+            </Button> */}
           </Box>
 
           <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.5, opacity: 0.5 }} />

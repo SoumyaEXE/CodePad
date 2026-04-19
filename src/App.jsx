@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import FileTabs from './components/FileTabs';
 import CodeEditor from './components/CodeEditor';
 import OutputPanel from './components/OutputPanel';
+import Editor from './components/Editor';
 import StatusBar from './components/StatusBar';
 import LanguageModal from './components/LanguageModal';
 import NewProjectModal from './components/NewProjectModal';
@@ -16,7 +17,7 @@ import Preloader from './components/Preloader';
 import { useFileSystem } from './hooks/useFileSystem';
 import { useCodeExecution } from './hooks/useCodeExecution';
 import { useEditorSettings } from './hooks/useEditorSettings';
-import { getLanguageFromExtension, WEB_LANGS } from './utils/languages';
+import { getLanguageFromExtension, WEB_LANGS, getLangById } from './utils/languages';
 import { LANGUAGE_TEMPLATES } from './utils/languageTemplates';
 
 /* ── VS Code–style Activity Bar ───────────────────── */
@@ -566,8 +567,8 @@ export default function App() {
     renameFolder,
   } = useFileSystem();
 
-  /* ── execution ─────────────────────────────── */
-  const { execute, isRunning, output, clearOutput } = useCodeExecution();
+  /* ── execution (Legacy) ─────────────────────── */
+  /* const { execute, isRunning, output, clearOutput } = useCodeExecution();
   const [runStatus, setRunStatus] = useState('idle');
   const [stdin, setStdin] = useState('');
   const [showOutput, setShowOutput] = useState(true);
@@ -578,7 +579,6 @@ export default function App() {
     if (!file) return;
     setShowOutput(true);
     
-    // Switch to appropriate tab
     if (WEB_LANGS.has(file.language)) {
       outputPanelRef.current?.switchToTab('preview');
     } else {
@@ -587,7 +587,17 @@ export default function App() {
 
     const result = await execute(file.content, file.language, stdin);
     setRunStatus(result.success ? 'success' : 'idle');
-  }, [files, activeFile, stdin, execute]);
+  }, [files, activeFile, stdin, execute]); */
+  const isRunning = false;
+  const output = '';
+  const clearOutput = () => {};
+  const handleRun = () => {};
+  const showOutput = false;
+  const setShowOutput = () => {};
+  const outputPanelRef = { current: null };
+  const runStatus = 'idle';
+  const stdin = '';
+  const setStdin = () => {};
 
   /* ── cursor position (for status bar) ──────────── */
   const [cursorPos, setCursorPos] = useState({ line: 1, column: 1 });
@@ -848,7 +858,7 @@ export default function App() {
                     showOutput={showOutput}
                     onToggleOutput={() => setMobileTab('output')}
                   />
-                  <CodeEditor
+                  {/* <CodeEditor
                     value={activeContent}
                     language={activeLanguage}
                     darkMode={darkMode}
@@ -856,6 +866,12 @@ export default function App() {
                     onChange={handleContentChange}
                     onCursorChange={setCursorPos}
                     ref={editorRef}
+                  /> */}
+                  <Editor
+                    language={getLangById(activeLanguage)?.ocLang || activeLanguage}
+                    code={activeContent}
+                    fileName={activeFile ? activeFile.split('/').pop() : ''}
+                    darkMode={darkMode}
                   />
                 </Box>
               )}
@@ -863,7 +879,7 @@ export default function App() {
               {/* Output tab */}
               {mobileTab === 'output' && (
                 <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <OutputPanel
+                  {/* <OutputPanel
                     ref={outputPanelRef}
                     width="100%"
                     output={output}
@@ -876,7 +892,7 @@ export default function App() {
                     onApplyFix={handleContentChange}
                     workspace={aiWorkspace}
                     actions={aiActions}
-                  />
+                  /> */}
                 </Box>
               )}
 
@@ -958,7 +974,7 @@ export default function App() {
 
                 <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0, overflow: 'hidden' }}>
-                    <CodeEditor
+                    {/* <CodeEditor
                       value={activeContent}
                       language={activeLanguage}
                       darkMode={darkMode}
@@ -966,10 +982,16 @@ export default function App() {
                       onChange={handleContentChange}
                       onCursorChange={setCursorPos}
                       ref={editorRef}
+                    /> */}
+                    <Editor
+                      language={getLangById(activeLanguage)?.ocLang || activeLanguage}
+                      code={activeContent}
+                      fileName={activeFile ? activeFile.split('/').pop() : ''}
+                      darkMode={darkMode}
                     />
                   </Box>
 
-                  {showOutput && (
+                  {/* {showOutput && (
                     <>
                       <Box
                         sx={{
@@ -1012,7 +1034,7 @@ export default function App() {
                         actions={aiActions}
                       />
                     </>
-                  )}
+                  )} */}
                 </Box>
               </Box>
             </Box>

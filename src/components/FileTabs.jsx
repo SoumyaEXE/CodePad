@@ -126,7 +126,7 @@ export default function FileTabs({
           height: '100%',
         }}
       >
-        <Button
+        {/* <Button
           id="run-btn"
           size="small"
           variant="contained"
@@ -165,7 +165,7 @@ export default function FileTabs({
           >
             Output
           </Button>
-        </Tooltip>
+        </Tooltip> */}
       </Box>
     </Box>
   );
