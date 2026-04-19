@@ -436,6 +436,7 @@ export default function App() {
   /* ── mobile detection + tab ──────────────────── */
   const isMobile = useMediaQuery('(max-width:768px)');
   const [mobileTab, setMobileTab] = useState('code');
+  const editorRef = useRef(null);
 
   /* ── resizable panel widths ────────────────────── */
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -782,6 +783,7 @@ export default function App() {
           activeContent={activeContent}
           files={files}
           isMobile={isMobile}
+          editorRef={editorRef}
         />
 
         {/* ═══ MOBILE LAYOUT ═══ */}
@@ -830,6 +832,7 @@ export default function App() {
                     settings={settings}
                     onChange={handleContentChange}
                     onCursorChange={setCursorPos}
+                    ref={editorRef}
                   />
                 </Box>
               )}
@@ -939,6 +942,7 @@ export default function App() {
                       settings={settings}
                       onChange={handleContentChange}
                       onCursorChange={setCursorPos}
+                      ref={editorRef}
                     />
                   </Box>
 

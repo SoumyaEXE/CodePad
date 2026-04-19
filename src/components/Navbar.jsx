@@ -20,6 +20,11 @@ export default function Navbar({
   activeFile,
   activeContent,
   files,
+  editorRef,
+  onRun,
+  isRunning,
+  showOutput,
+  onToggleOutput,
 }) {
   const [snackMsg, setSnackMsg] = useState('');
 
@@ -173,8 +178,38 @@ export default function Navbar({
         </Box>
 
         {/* Right actions */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-          <Tooltip title="Copy code" arrow>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                if (editorRef?.current) {
+                  editorRef.current
+                    .getAction("editor.action.formatDocument")
+                    .run();
+                }
+              }}
+              sx={{
+                height: 26,
+                fontSize: 12,
+                textTransform: 'none',
+                fontWeight: 500,
+                minWidth: 0,
+                px: 1.5,
+                borderColor: 'divider',
+                color: 'text.secondary',
+                '&:hover': { borderColor: 'text.primary', bgcolor: 'action.hover' },
+              }}
+            >
+              Format
+            </Button>
+          </Box>
+
+          <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.5, opacity: 0.5 }} />
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+            <Tooltip title="Copy code" arrow>
             <IconButton onClick={handleCopyCode} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
               <ContentCopyOutlinedIcon sx={{ fontSize: 17 }} />
             </IconButton>
@@ -202,6 +237,7 @@ export default function Navbar({
               <SettingsOutlinedIcon sx={{ fontSize: 19 }} />
             </IconButton>
           </Tooltip>
+          </Box>
         </Box>
       </Box>
 

@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { getLangById } from '../utils/languages';
+import { useConfetti } from './useConfetti';
 
 const OC_API_URL = '/api/onecompiler/v1/run';
 const API_KEY = import.meta.env.VITE_OC_API_KEY || '';
 
 export function useCodeExecution() {
+  const fireConfetti = useConfetti();
   const [isRunning, setIsRunning] = useState(false);
   const [output, setOutput] = useState({
     stdout: '',
@@ -91,7 +93,13 @@ export function useCodeExecution() {
 
       setOutput(result);
       setIsRunning(false);
-      return { success: data.status === 'success' && !data.exception && !data.error };
+
+      const success = data.status === 'success' && !data.exception && !data.error;
+      if (success) {
+        fireConfetti();
+      }
+
+      return { success };
     } catch (err) {
       const result = {
         stdout: '',
@@ -105,7 +113,7 @@ export function useCodeExecution() {
       setIsRunning(false);
       return { success: false };
     }
-  }, []);
+  }, [fireConfetti]);
 
   const clearOutput = useCallback(() => {
     setOutput({

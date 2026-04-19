@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useImperativeHandle, forwardRef, useRef } from 'react';
 import { Box, Typography } from '@mui/material';
 import Editor from '@monaco-editor/react';
 import { getMonacoLanguage } from '../utils/languages';
@@ -43,14 +43,18 @@ function defineThemes(monaco) {
 
 /* ── editor ─────────────────────────────────────── */
 
-export default function CodeEditor({
+const CodeEditor = forwardRef(({
   value,
   language,
   darkMode,
   settings = {},
   onChange,
   onCursorChange,
-}) {
+}, ref) => {
+  const editorRef = useRef(null);
+
+  useImperativeHandle(ref, () => editorRef.current);
+
   const monacoLang = getMonacoLanguage(language);
   const themeName = darkMode ? 'codepad-dark' : 'codepad-light';
 
@@ -75,6 +79,7 @@ export default function CodeEditor({
   /** Mount: cursor tracking + context menu actions */
   const handleEditorMount = useCallback(
     (editor, monaco) => {
+      editorRef.current = editor;
       if (!onCursorChange) return;
 
       // Fire initial position
@@ -95,7 +100,6 @@ export default function CodeEditor({
         'editor.action.clipboardCutAction',
         'editor.action.clipboardCopyAction',
         'editor.action.clipboardPasteAction',
-        'editor.action.formatDocument'
       ];
       nativeActions.forEach((id) => {
         const action = editor.getAction(id);
@@ -262,4 +266,6 @@ export default function CodeEditor({
       />
     </Box>
   );
-}
+});
+
+export default CodeEditor;
