@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, TextField, IconButton, Menu, MenuItem } from '@mui/material';
 import AISidebar from './AISidebar';
+import { WEB_LANGS } from '../utils/languages';
 
 /* ── Tab button ── */
 function Tab({ label, icon, active, onClick }) {
@@ -96,8 +97,6 @@ function MoreVertSvg() {
   );
 }
 
-/* ── Web languages that render in iframe ── */
-const WEB_LANGS = new Set(['html', 'react', 'vuejs', 'angular', 'bootstrap', 'tailwindcss', 'htmx', 'alpinejs', 'chartjs', 'd3js', 'jquery', 'foundation', 'bulma', 'uikit', 'semanticui', 'skeleton', 'milligram', 'papercss', 'backbonejs', 'materialize', 'ejs', 'coffeescript']);
 
 /* ═══════════════════════════════════════════════════ */
 /*  OUTPUT PANEL                                      */
@@ -177,10 +176,9 @@ const OutputPanel = forwardRef(function OutputPanel({
       >
         <Tab label="Console" icon={<ConsoleSvg />} active={activeTab === 'console'} onClick={() => setActiveTab('console')} />
         <Tab label="I/O" icon={<IOSvg />} active={activeTab === 'io'} onClick={() => setActiveTab('io')} />
-        {isWebLang ? (
+        <Tab label="AI Agent" icon={<AiAgentSvg />} active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+        {isWebLang && (
           <Tab label="Preview" icon={<BrowserSvg />} active={activeTab === 'preview'} onClick={() => setActiveTab('preview')} />
-        ) : (
-          <Tab label="AI Agent" icon={<AiAgentSvg />} active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
         )}
 
         {/* Spacer */}

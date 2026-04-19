@@ -16,7 +16,7 @@ import Preloader from './components/Preloader';
 import { useFileSystem } from './hooks/useFileSystem';
 import { useCodeExecution } from './hooks/useCodeExecution';
 import { useEditorSettings } from './hooks/useEditorSettings';
-import { getLanguageFromExtension } from './utils/languages';
+import { getLanguageFromExtension, WEB_LANGS } from './utils/languages';
 import { LANGUAGE_TEMPLATES } from './utils/languageTemplates';
 
 /* ── VS Code–style Activity Bar ───────────────────── */
@@ -555,8 +555,14 @@ export default function App() {
     const file = files[activeFile];
     if (!file) return;
     setShowOutput(true);
-    // Switch to I/O tab so user sees the output
-    outputPanelRef.current?.switchToTab('io');
+    
+    // Switch to appropriate tab
+    if (WEB_LANGS.has(file.language)) {
+      outputPanelRef.current?.switchToTab('preview');
+    } else {
+      outputPanelRef.current?.switchToTab('io');
+    }
+
     const result = await execute(file.content, file.language, stdin);
     setRunStatus(result.success ? 'success' : 'idle');
   }, [files, activeFile, stdin, execute]);
