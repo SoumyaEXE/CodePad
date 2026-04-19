@@ -7,6 +7,7 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AddIcon from '@mui/icons-material/Add';
+import DataObjectOutlinedIcon from '@mui/icons-material/DataObjectOutlined';
 
 export default function Navbar({
   darkMode,
@@ -78,71 +79,48 @@ export default function Navbar({
           flexShrink: 0,
         }}
       >
-        {/* Left — brand + new playground */}
+        {/* Left actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Logo icon */}
           <Box
             sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '7px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              background: darkMode
-                ? 'linear-gradient(135deg, #6366F1, #4F46E5)'
-                : 'linear-gradient(135deg, #4F46E5, #4338CA)',
-              boxShadow: `0 2px 8px ${darkMode ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.3)'}`,
-              flexShrink: 0,
+              gap: '8px',
+              cursor: 'default',
+              userSelect: 'none',
+              mr: 1,
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M8 6l-6 6 6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M16 6l6 6-6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 4l-4 16" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </Box>
+            {/* Logo icon */}
+            <Box
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                flexShrink: 0,
+              }}
+            >
+              <DataObjectOutlinedIcon sx={{ fontSize: 18, color: '#FFFFFF' }} />
+            </Box>
 
-          {/* Brand text */}
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.25 }}>
+            {/* Brand text */}
             <Typography
               sx={{
-                fontWeight: 700, fontSize: 16, lineHeight: 1,
-                letterSpacing: '-0.02em', color: 'text.primary',
+                fontWeight: 800,
+                fontSize: '17px',
+                letterSpacing: '-0.5px',
+                color: 'text.primary',
                 fontFamily: "'Inter', sans-serif",
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
-              Code
-            </Typography>
-            <Typography
-              sx={{
-                fontWeight: 700, fontSize: 16, lineHeight: 1,
-                letterSpacing: '-0.02em',
-                color: primary,
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              Pad
-            </Typography>
-          </Box>
-
-          {/* PRO badge */}
-          <Box
-            sx={{
-              px: 0.6, py: 0.15, borderRadius: '4px',
-              bgcolor: darkMode ? 'rgba(99,102,241,0.12)' : 'rgba(79,70,229,0.08)',
-              border: '1px solid',
-              borderColor: darkMode ? 'rgba(99,102,241,0.25)' : 'rgba(79,70,229,0.15)',
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 8.5, fontWeight: 700,
-                color: primaryLight,
-                lineHeight: 1, letterSpacing: '0.08em',
-              }}
-            >
-              PRO
+              Code<Box component="span" sx={{ color: primary }}>Pad</Box>
             </Typography>
           </Box>
 
