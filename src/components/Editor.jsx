@@ -105,7 +105,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
           if (!currentCode) return;
 
           const lang = (language || localStorage.getItem("codePad_language") || "python").toLowerCase();
-          
+
           let formatted = currentCode;
           try {
             formatted = universalFormat(currentCode, lang);
@@ -163,12 +163,12 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       if (event.origin.includes('onecompiler.com')) {
         if (event.data) {
           const data = event.data;
-          
+
           // Confetti logic
-          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') && 
-                            data.result && 
-                            data.result.success === true;
-          
+          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') &&
+            data.result &&
+            data.result.success === true;
+
           if (isSuccess) {
             console.log('Execution successful! Firing confetti...');
             fireConfetti();
@@ -182,7 +182,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
             if (newCode !== undefined && newCode !== lastCodeRef.current) {
               lastCodeRef.current = newCode;
               localStorage.setItem("codePad_code", newCode);
-              
+
               if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
               saveTimeoutRef.current = setTimeout(() => {
                 if (onChange) {
@@ -204,7 +204,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   useEffect(() => {
     const theme = darkMode ? 'dark' : 'light';
     const newSrc = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&hideRun=true&listenToEvents=true&codeChangeEvent=true`;
-    
+
     if (newSrc !== currentSrc) {
       setLoading(true);
       setCurrentSrc(newSrc);
@@ -232,7 +232,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-  }, [loading, language, fileName]); 
+  }, [loading, language, fileName]);
 
   // Polling for code changes
   useEffect(() => {
