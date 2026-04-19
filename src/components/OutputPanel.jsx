@@ -119,6 +119,19 @@ const OutputPanel = forwardRef(function OutputPanel({
   const [activeTab, setActiveTab] = useState('console');
   const [menuAnchor, setMenuAnchor] = useState(null);
   const menuOpen = Boolean(menuAnchor);
+  const [contextMenuCoords, setContextMenuCoords] = useState(null);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    setContextMenuCoords({ mouseX: e.clientX, mouseY: e.clientY });
+  };
+  const handleCloseContextMenu = () => setContextMenuCoords(null);
+
+  const handleCopyAll = () => {
+    const textToCopy = `${output.stdout || ''}\n${output.stderr || ''}\n${output.exception || ''}\n${output.error || ''}`.trim();
+    if (textToCopy) navigator.clipboard.writeText(textToCopy);
+    handleCloseContextMenu();
+  };
 
   useImperativeHandle(ref, () => ({
     switchToTab(tab) {
@@ -298,6 +311,7 @@ const OutputPanel = forwardRef(function OutputPanel({
       {/* ── Console output area ─────────────────── */}
       {(activeTab === 'console' || activeTab === 'io') && (
         <Box
+          onContextMenu={handleContextMenu}
           sx={{
             flexGrow: 1,
             overflowY: 'auto',
@@ -332,6 +346,44 @@ const OutputPanel = forwardRef(function OutputPanel({
           )}
         </Box>
       )}
+
+      {/* ── Custom Context Menu ─────────────────── */}
+      <Menu
+        open={contextMenuCoords !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenuCoords !== null
+            ? { top: contextMenuCoords.mouseY, left: contextMenuCoords.mouseX }
+            : undefined
+        }
+        slotProps={{
+          paper: {
+            sx: {
+              minWidth: 130,
+              bgcolor: (t) => t.palette.mode === 'dark' ? '#252830' : '#fff',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '6px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+              py: 0.25,
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => { handleCloseContextMenu(); onClearOutput?.(); }}
+          sx={{ fontSize: 12.5, py: 0.5, px: 1.5, minHeight: 0 }}
+        >
+          Clear output
+        </MenuItem>
+        <MenuItem
+          onClick={handleCopyAll}
+          sx={{ fontSize: 12.5, py: 0.5, px: 1.5, minHeight: 0 }}
+        >
+          Copy all
+        </MenuItem>
+      </Menu>
     </Box>
   );
 });

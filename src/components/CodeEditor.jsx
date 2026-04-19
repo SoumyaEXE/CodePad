@@ -90,8 +90,81 @@ export default function CodeEditor({
         });
       });
 
-      /* ── Make context menu actions work ── */
-      // Native actions (Cut, Copy, Paste, Format Document) are already provided by Monaco.
+      /* ── Hide native context menu actions ── */
+      const nativeActions = [
+        'editor.action.clipboardCutAction',
+        'editor.action.clipboardCopyAction',
+        'editor.action.clipboardPasteAction',
+        'editor.action.formatDocument'
+      ];
+      nativeActions.forEach((id) => {
+        const action = editor.getAction(id);
+        if (action) {
+          action.isSupported = () => false;
+        }
+      });
+
+      /* ── Make context menu actions work (with key hints) ── */
+
+      // Cut
+      editor.addAction({
+        id: 'codepad.cut',
+        label: 'Cut',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyX],
+        contextMenuGroupId: 'clipboard',
+        contextMenuOrder: 1,
+        run: (ed) => {
+          const sel = ed.getModel().getValueInRange(ed.getSelection());
+          if (sel) {
+            navigator.clipboard.writeText(sel).then(() => {
+              ed.executeEdits('', [{ range: ed.getSelection(), text: '' }]);
+            });
+          }
+        },
+      });
+
+      // Copy
+      editor.addAction({
+        id: 'codepad.copy',
+        label: 'Copy',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+        contextMenuGroupId: 'clipboard',
+        contextMenuOrder: 2,
+        run: (ed) => {
+          const sel = ed.getModel().getValueInRange(ed.getSelection());
+          if (sel) {
+            navigator.clipboard.writeText(sel);
+          }
+        },
+      });
+
+      // Paste
+      editor.addAction({
+        id: 'codepad.paste',
+        label: 'Paste',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV],
+        contextMenuGroupId: 'clipboard',
+        contextMenuOrder: 3,
+        run: async (ed) => {
+          try {
+            const text = await navigator.clipboard.readText();
+            ed.executeEdits('', [{ range: ed.getSelection(), text }]);
+          } catch { /* clipboard access denied */ }
+        },
+      });
+
+      // Format Document
+      editor.addAction({
+        id: 'codepad.format',
+        label: 'Format Document',
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF],
+        contextMenuGroupId: 'modification',
+        contextMenuOrder: 1,
+        run: (ed) => {
+          // Trigger the original formatting internally
+          ed.trigger('codepad', 'editor.action.formatDocument', null);
+        },
+      });
     },
     [onCursorChange],
   );

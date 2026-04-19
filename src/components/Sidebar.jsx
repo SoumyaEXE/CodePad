@@ -181,6 +181,7 @@ function InlineInput({ placeholder, onSubmit, onCancel }) {
 function FileRow({ node, depth, isActive, onOpen, onDelete, onRename, onDownload, isOnly }) {
   const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenuCoords, setContextMenuCoords] = useState(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(node.name);
   const btnRef = useRef(null);
@@ -189,7 +190,17 @@ function FileRow({ node, depth, isActive, onOpen, onDelete, onRename, onDownload
     e.stopPropagation();
     setMenuOpen(true);
   };
-  const handleMenuClose = () => setMenuOpen(false);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuCoords({ mouseX: e.clientX, mouseY: e.clientY });
+  };
+
+  const handleMenuClose = () => {
+    setMenuOpen(false);
+    setContextMenuCoords(null);
+  };
 
   const handleRename = () => {
     handleMenuClose();
@@ -264,6 +275,7 @@ function FileRow({ node, depth, isActive, onOpen, onDelete, onRename, onDownload
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={() => onOpen(node.path)}
+        onContextMenu={handleContextMenu}
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -313,11 +325,17 @@ function FileRow({ node, depth, isActive, onOpen, onDelete, onRename, onDownload
 
       {/* Context menu — compact, reference-matching style */}
       <Menu
-        anchorEl={btnRef.current}
-        open={menuOpen}
+        anchorEl={contextMenuCoords !== null ? null : btnRef.current}
+        open={menuOpen || contextMenuCoords !== null}
         onClose={handleMenuClose}
+        anchorReference={contextMenuCoords !== null ? 'anchorPosition' : 'anchorEl'}
+        anchorPosition={
+          contextMenuCoords !== null
+            ? { top: contextMenuCoords.mouseY, left: contextMenuCoords.mouseX }
+            : undefined
+        }
         anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        transformOrigin={contextMenuCoords !== null ? undefined : { vertical: 'top', horizontal: 'left' }}
         slotProps={{
           paper: {
             sx: {
