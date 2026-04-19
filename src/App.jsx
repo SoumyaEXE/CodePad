@@ -139,7 +139,7 @@ function SearchPanel({ width, files, onOpenFile }) {
     return (
       <>
         {text.slice(0, idx)}
-        <Box component="span" sx={{ bgcolor: isDark ? 'rgba(167,139,250,0.3)' : 'rgba(124,58,237,0.2)', borderRadius: '2px', px: '1px' }}>
+        <Box component="span" sx={{ bgcolor: isDark ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.2)', borderRadius: '2px', px: '1px' }}>
           {text.slice(idx, idx + q.length)}
         </Box>
         {text.slice(idx + q.length)}
@@ -183,7 +183,7 @@ function SearchPanel({ width, files, onOpenFile }) {
             px: 1,
             py: 0.4,
             transition: 'border-color 150ms ease',
-            '&:focus-within': { borderColor: isDark ? '#a78bfa' : '#7c3aed' },
+            '&:focus-within': { borderColor: isDark ? '#818CF8' : '#4F46E5' },
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, flexShrink: 0 }}>

@@ -146,7 +146,7 @@ const StyledPreloader = styled.div`
   }
 
   .brand-pad {
-    background: linear-gradient(135deg, #a78bfa, #7c3aed);
+    background: linear-gradient(135deg, #818CF8, #6366F1);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -178,7 +178,7 @@ const StyledPreloader = styled.div`
     height: 100%;
     width: 0%;
     border-radius: 4px;
-    background: linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed);
+    background: linear-gradient(90deg, #4F46E5, #818CF8, #4F46E5);
     background-size: 200% 100%;
     animation: fill-bar 3.5s ease 1.2s forwards, shimmer-bar 1.5s ease-in-out infinite;
   }

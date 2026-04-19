@@ -23,69 +23,38 @@ export default function Navbar({
 }) {
   const [snackMsg, setSnackMsg] = useState('');
 
-  /* ── Download current file ── */
   const handleDownload = () => {
-    if (!activeFile || !activeContent) {
-      setSnackMsg('No file to download');
-      return;
-    }
-    const fileName = activeFile.includes('/')
-      ? activeFile.split('/').pop()
-      : activeFile;
+    if (!activeFile || !activeContent) { setSnackMsg('No file to download'); return; }
+    const fileName = activeFile.includes('/') ? activeFile.split('/').pop() : activeFile;
     const blob = new Blob([activeContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
+    a.href = url; a.download = fileName; a.click();
     URL.revokeObjectURL(url);
     setSnackMsg(`Downloaded ${fileName}`);
   };
 
-  /* ── Copy code to clipboard ── */
   const handleCopyCode = async () => {
-    if (!activeContent) {
-      setSnackMsg('No code to copy');
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(activeContent);
-      setSnackMsg('Code copied to clipboard');
-    } catch {
-      setSnackMsg('Failed to copy');
-    }
+    if (!activeContent) { setSnackMsg('No code to copy'); return; }
+    try { await navigator.clipboard.writeText(activeContent); setSnackMsg('Code copied to clipboard'); }
+    catch { setSnackMsg('Failed to copy'); }
   };
 
-  /* ── Share code (copies shareable text) ── */
   const handleShare = async () => {
-    if (!activeContent) {
-      setSnackMsg('No code to share');
-      return;
-    }
-    const fileName = activeFile?.includes('/')
-      ? activeFile.split('/').pop()
-      : activeFile || 'untitled';
+    if (!activeContent) { setSnackMsg('No code to share'); return; }
+    const fileName = activeFile?.includes('/') ? activeFile.split('/').pop() : activeFile || 'untitled';
     const shareText = `// ${fileName} — Shared from CodePad\n\n${activeContent}`;
-
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${fileName} — CodePad`,
-          text: shareText,
-        });
-        return;
-      } catch {
-        /* user cancelled or not supported */
-      }
+      try { await navigator.share({ title: `${fileName} — CodePad`, text: shareText }); return; }
+      catch { /* cancelled */ }
     }
-
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setSnackMsg('Share link copied to clipboard');
-    } catch {
-      setSnackMsg('Failed to share');
-    }
+    try { await navigator.clipboard.writeText(shareText); setSnackMsg('Share link copied to clipboard'); }
+    catch { setSnackMsg('Failed to share'); }
   };
+
+  // Theme-derived colors (indigo)
+  const primary = darkMode ? '#6366F1' : '#4F46E5';
+  const primaryLight = darkMode ? '#818CF8' : '#6366F1';
 
   return (
     <>
@@ -116,9 +85,9 @@ export default function Navbar({
               alignItems: 'center',
               justifyContent: 'center',
               background: darkMode
-                ? 'linear-gradient(135deg, #7c3aed, #6d28d9)'
-                : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
+                ? 'linear-gradient(135deg, #6366F1, #4F46E5)'
+                : 'linear-gradient(135deg, #4F46E5, #4338CA)',
+              boxShadow: `0 2px 8px ${darkMode ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.3)'}`,
               flexShrink: 0,
             }}
           >
@@ -133,11 +102,8 @@ export default function Navbar({
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.25 }}>
             <Typography
               sx={{
-                fontWeight: 700,
-                fontSize: 16,
-                lineHeight: 1,
-                letterSpacing: '-0.02em',
-                color: 'text.primary',
+                fontWeight: 700, fontSize: 16, lineHeight: 1,
+                letterSpacing: '-0.02em', color: 'text.primary',
                 fontFamily: "'Inter', sans-serif",
               }}
             >
@@ -145,16 +111,9 @@ export default function Navbar({
             </Typography>
             <Typography
               sx={{
-                fontWeight: 700,
-                fontSize: 16,
-                lineHeight: 1,
+                fontWeight: 700, fontSize: 16, lineHeight: 1,
                 letterSpacing: '-0.02em',
-                background: darkMode
-                  ? 'linear-gradient(135deg, #a78bfa, #7c3aed)'
-                  : 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                color: primary,
                 fontFamily: "'Inter', sans-serif",
               }}
             >
@@ -165,23 +124,17 @@ export default function Navbar({
           {/* PRO badge */}
           <Box
             sx={{
-              px: 0.6,
-              py: 0.15,
-              borderRadius: '4px',
-              background: darkMode
-                ? 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(124,58,237,0.2))'
-                : 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(139,92,246,0.1))',
+              px: 0.6, py: 0.15, borderRadius: '4px',
+              bgcolor: darkMode ? 'rgba(99,102,241,0.12)' : 'rgba(79,70,229,0.08)',
               border: '1px solid',
-              borderColor: darkMode ? 'rgba(139,92,246,0.3)' : 'rgba(124,58,237,0.2)',
+              borderColor: darkMode ? 'rgba(99,102,241,0.25)' : 'rgba(79,70,229,0.15)',
             }}
           >
             <Typography
               sx={{
-                fontSize: 8.5,
-                fontWeight: 700,
-                color: darkMode ? '#a78bfa' : '#7c3aed',
-                lineHeight: 1,
-                letterSpacing: '0.08em',
+                fontSize: 8.5, fontWeight: 700,
+                color: primaryLight,
+                lineHeight: 1, letterSpacing: '0.08em',
               }}
             >
               PRO
@@ -189,39 +142,29 @@ export default function Navbar({
           </Box>
 
           {/* Divider */}
-          <Box
-            sx={{
-              width: '1px',
-              height: 20,
-              bgcolor: 'divider',
-              mx: 0.5,
-              opacity: 0.5,
-            }}
-          />
+          <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.5, opacity: 0.5 }} />
 
-          {/* New Playground — full text button */}
+          {/* New Playground */}
           <Button
             onClick={onNewProject}
-            startIcon={<AddIcon sx={{ fontSize: '16px !important' }} />}
+            startIcon={<AddIcon sx={{ fontSize: '15px !important' }} />}
             size="small"
             sx={{
-              textTransform: 'none',
-              fontSize: 12,
-              fontWeight: 500,
-              color: 'text.secondary',
-              px: 1.25,
-              py: 0.4,
-              borderRadius: '6px',
-              minWidth: 'auto',
-              border: '1px solid',
-              borderColor: 'divider',
-              fontFamily: "'Inter', sans-serif",
-              lineHeight: 1.2,
+              textTransform: 'none', fontSize: 12, fontWeight: 600,
+              color: '#fff', px: 1.5, py: 0.45, borderRadius: '7px',
+              minWidth: 'auto', fontFamily: "'Inter', sans-serif", lineHeight: 1.2,
+              background: darkMode
+                ? 'linear-gradient(135deg, #6366F1, #4F46E5)'
+                : 'linear-gradient(135deg, #4F46E5, #4338CA)',
+              boxShadow: `0 2px 8px ${darkMode ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.3)'}`,
+              border: 'none',
               transition: 'all 150ms ease',
               '&:hover': {
-                color: darkMode ? '#a78bfa' : '#7c3aed',
-                borderColor: darkMode ? 'rgba(139,92,246,0.4)' : 'rgba(124,58,237,0.3)',
-                bgcolor: darkMode ? 'rgba(139,92,246,0.06)' : 'rgba(124,58,237,0.04)',
+                background: darkMode
+                  ? 'linear-gradient(135deg, #818CF8, #6366F1)'
+                  : 'linear-gradient(135deg, #6366F1, #4F46E5)',
+                boxShadow: `0 4px 14px ${darkMode ? 'rgba(99,102,241,0.4)' : 'rgba(79,70,229,0.4)'}`,
+                transform: 'translateY(-1px)',
               },
             }}
           >
@@ -229,64 +172,31 @@ export default function Navbar({
           </Button>
         </Box>
 
-        {/* Right actions — tools first, settings last */}
+        {/* Right actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-          {/* Copy Code */}
           <Tooltip title="Copy code" arrow>
-            <IconButton
-              onClick={handleCopyCode}
-              size="small"
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
+            <IconButton onClick={handleCopyCode} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
               <ContentCopyOutlinedIcon sx={{ fontSize: 17 }} />
             </IconButton>
           </Tooltip>
-
-          {/* Download */}
           <Tooltip title="Download file" arrow>
-            <IconButton
-              onClick={handleDownload}
-              size="small"
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
+            <IconButton onClick={handleDownload} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
               <FileDownloadOutlinedIcon sx={{ fontSize: 19 }} />
             </IconButton>
           </Tooltip>
-
-          {/* Share */}
           <Tooltip title="Share code" arrow>
-            <IconButton
-              onClick={handleShare}
-              size="small"
-              sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
-            >
+            <IconButton onClick={handleShare} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
               <ShareOutlinedIcon sx={{ fontSize: 17 }} />
             </IconButton>
           </Tooltip>
 
-          {/* Divider */}
-          <Box
-            sx={{
-              width: '1px',
-              height: 20,
-              bgcolor: 'divider',
-              mx: 0.5,
-              opacity: 0.5,
-            }}
-          />
+          <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.5, opacity: 0.5 }} />
 
-          {/* Dark mode */}
           <Tooltip title={darkMode ? 'Light mode' : 'Dark mode'} arrow>
             <IconButton id="theme-toggle" onClick={onToggleDarkMode} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
-              {darkMode ? (
-                <WbSunnyOutlinedIcon sx={{ fontSize: 19 }} />
-              ) : (
-                <DarkModeOutlinedIcon sx={{ fontSize: 19 }} />
-              )}
+              {darkMode ? <WbSunnyOutlinedIcon sx={{ fontSize: 19 }} /> : <DarkModeOutlinedIcon sx={{ fontSize: 19 }} />}
             </IconButton>
           </Tooltip>
-
-          {/* Settings — always last */}
           <Tooltip title="Settings" arrow>
             <IconButton onClick={onSettings} size="small" sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}>
               <SettingsOutlinedIcon sx={{ fontSize: 19 }} />
@@ -295,26 +205,15 @@ export default function Navbar({
         </Box>
       </Box>
 
-      {/* Toast notification */}
       <Snackbar
-        open={!!snackMsg}
-        autoHideDuration={2000}
-        onClose={() => setSnackMsg('')}
-        message={snackMsg}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        open={!!snackMsg} autoHideDuration={2000} onClose={() => setSnackMsg('')}
+        message={snackMsg} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         ContentProps={{
           sx: {
-            bgcolor: 'background.paper',
-            color: 'text.primary',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: '8px',
-            fontSize: 12,
-            fontWeight: 500,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-            minWidth: 'auto',
-            py: 0.25,
-            '& .MuiSnackbarContent-message': { py: 0 },
+            bgcolor: 'background.paper', color: 'text.primary',
+            border: '1px solid', borderColor: 'divider', borderRadius: '8px',
+            fontSize: 12, fontWeight: 500, boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+            minWidth: 'auto', py: 0.25, '& .MuiSnackbarContent-message': { py: 0 },
           },
         }}
       />

@@ -81,7 +81,7 @@ function ThinkingIndicator() {
             },
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#a78bfa' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#818CF8' }}>
             <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z" />
             <path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14z" opacity="0.6" />
           </svg>
@@ -91,7 +91,7 @@ function ThinkingIndicator() {
           sx={{
             fontSize: 11.5,
             fontWeight: 500,
-            background: 'linear-gradient(90deg, #a78bfa 0%, #c4b5fd 40%, #a78bfa 80%)',
+            background: 'linear-gradient(90deg, #818CF8 0%, #A5B4FC 40%, #818CF8 80%)',
             backgroundSize: '200% 100%',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
@@ -114,7 +114,7 @@ function ThinkingIndicator() {
                 width: 4,
                 height: 4,
                 borderRadius: '50%',
-                bgcolor: '#a78bfa',
+                bgcolor: '#818CF8',
                 animation: 'dot-bounce 1.4s infinite ease-in-out',
                 animationDelay: `${i * 0.15}s`,
                 '@keyframes dot-bounce': {
@@ -369,7 +369,7 @@ export default function AISidebar({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          <Box sx={{ color: isDark ? '#a78bfa' : '#7c3aed', display: 'flex' }}>
+          <Box sx={{ color: isDark ? '#818CF8' : '#4F46E5', display: 'flex' }}>
             <SparkleIcon size={14} />
           </Box>
           <Typography
@@ -434,8 +434,8 @@ export default function AISidebar({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: isDark ? 'rgba(167,139,250,0.1)' : 'rgba(124,58,237,0.08)',
-                color: isDark ? '#a78bfa' : '#7c3aed',
+                bgcolor: isDark ? 'rgba(99,102,241,0.1)' : 'rgba(79,70,229,0.08)',
+                color: isDark ? '#818CF8' : '#4F46E5',
               }}
             >
               <SparkleIcon size={22} />
@@ -475,9 +475,9 @@ export default function AISidebar({
                     bgcolor: 'background.paper',
                     transition: 'all 120ms ease',
                     '&:hover': {
-                      borderColor: isDark ? '#a78bfa' : '#7c3aed',
-                      color: isDark ? '#a78bfa' : '#7c3aed',
-                      bgcolor: isDark ? 'rgba(167,139,250,0.06)' : 'rgba(124,58,237,0.04)',
+                      borderColor: isDark ? '#818CF8' : '#4F46E5',
+                      color: isDark ? '#818CF8' : '#4F46E5',
+                      bgcolor: isDark ? 'rgba(99,102,241,0.06)' : 'rgba(79,70,229,0.04)',
                     },
                   }}
                 >
