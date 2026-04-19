@@ -1,9 +1,7 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { Box, Fade, CircularProgress } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
-import * as prettier from "prettier/standalone";
-import * as parserBabel from "prettier/plugins/babel";
-import * as prettierEstree from "prettier/plugins/estree";
+import jsbeautify from 'js-beautify';
 
 const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange, formatRef }, ref) {
   const iframeRef = useRef(null);
@@ -17,76 +15,17 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   useEffect(() => {
     if (formatRef) {
       formatRef.current = {
-        formatCode: async () => {
-          const saved = lastCodeRef.current || code || localStorage.getItem("codePad_code");
-          const lang = (language || localStorage.getItem("codePad_language") || "python").toLowerCase();
-          
-          if (!saved) return;
+        formatCode: () => {
+          const currentCode = lastCodeRef.current || code;
+          if (!currentCode) return;
 
-          console.log(`Formatting attempt for language: ${lang}`);
-          let formatted = saved;
-
-          try {
-            // JS/JSX/TS — use prettier
-            if (["javascript", "typescript", "nodejs", "js", "ts", "jsx", "tsx"].includes(lang)) {
-              console.log('Formatting via Prettier...');
-              try {
-                formatted = await prettier.format(saved, {
-                  parser: "babel",
-                  plugins: [parserBabel, prettierEstree],
-                  semi: true,
-                  singleQuote: false,
-                  tabWidth: 2,
-                  printWidth: 80,
-                });
-              } catch (err) {
-                console.warn("Prettier failed, using fallback:", err);
-                formatted = saved
-                  .replace(/\t/g, "  ")
-                  .replace(/[ \t]+$/gm, "")
-                  .replace(/\n{3,}/g, "\n\n");
-              }
-            }
-            // Python — Pure JS implementation of the requested stdlib logic
-            else if (lang === "python" || lang === "py") {
-              console.log('Formatting Python via Pure JavaScript (Safe Indent)...');
-              
-              // 1. Expand tabs to 4 spaces & strip trailing whitespace
-              const lines = saved.split("\n");
-              const normalized = lines.map(line => {
-                // Manually expand tabs to 4 spaces
-                return line.replace(/\t/g, "    ").trimEnd();
-              });
-
-              // 2. Remove more than 2 consecutive blank lines
-              const result = [];
-              let blankCount = 0;
-              for (const line of normalized) {
-                if (line.trim() === "") {
-                  blankCount++;
-                  if (blankCount <= 2) {
-                    result.push("");
-                  }
-                } else {
-                  blankCount = 0;
-                  result.push(line);
-                }
-              }
-
-              formatted = result.join("\n").trimEnd() + "\n";
-            }
-            // Fallback for others
-            else {
-              console.log('Applying smart cleanup (others)...');
-              formatted = saved
-                .replace(/\t/g, "    ")
-                .replace(/[ \t]+$/gm, "")
-                .replace(/\n{3,}/g, "\n\n");
-            }
-          } catch (err) {
-            console.warn("Format failed:", err);
-            formatted = saved;
-          }
+          const formatted = jsbeautify(currentCode, {
+            indent_size: 4,
+            space_in_empty_paren: true,
+            preserve_newlines: true,
+            max_preserve_newlines: 2,
+            end_with_newline: true,
+          });
 
           // Update local state and parent
           lastCodeRef.current = formatted;
@@ -125,12 +64,12 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       if (event.origin.includes('onecompiler.com')) {
         if (event.data) {
           const data = event.data;
-          
+
           // Confetti logic
-          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') && 
-                            data.result && 
-                            data.result.success === true;
-          
+          const isSuccess = (data.action === 'runComplete' || data.eventType === 'runFinished') &&
+            data.result &&
+            data.result.success === true;
+
           if (isSuccess) {
             console.log('Execution successful! Firing confetti...');
             fireConfetti();
@@ -144,7 +83,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
             if (newCode !== undefined && newCode !== lastCodeRef.current) {
               lastCodeRef.current = newCode;
               localStorage.setItem("codePad_code", newCode);
-              
+
               if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
               saveTimeoutRef.current = setTimeout(() => {
                 if (onChange) {
@@ -166,7 +105,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   useEffect(() => {
     const theme = darkMode ? 'dark' : 'light';
     const newSrc = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&listenToEvents=true&codeChangeEvent=true`;
-    
+
     if (newSrc !== currentSrc) {
       setLoading(true);
       setCurrentSrc(newSrc);
@@ -194,7 +133,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-  }, [loading, language, fileName]); 
+  }, [loading, language, fileName]);
 
   // Polling for code changes
   useEffect(() => {
