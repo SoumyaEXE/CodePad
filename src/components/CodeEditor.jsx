@@ -1,6 +1,7 @@
-import React, { useCallback, useImperativeHandle, forwardRef, useRef } from 'react';
+import React, { useCallback, useImperativeHandle, forwardRef, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import Editor from '@monaco-editor/react';
+import beautify from 'js-beautify';
 import { getMonacoLanguage } from '../utils/languages';
 
 /* ── custom themes ───────────────────────────────── */
@@ -52,8 +53,9 @@ const CodeEditor = forwardRef(({
   onCursorChange,
 }, ref) => {
   const editorRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
 
-  useImperativeHandle(ref, () => editorRef.current);
+  useImperativeHandle(ref, () => editorRef.current, [mounted]);
 
   const monacoLang = getMonacoLanguage(language);
   const themeName = darkMode ? 'codepad-dark' : 'codepad-light';
@@ -74,12 +76,65 @@ const CodeEditor = forwardRef(({
     monaco.languages.json?.jsonDefaults?.setDiagnosticsOptions({
       validate: false,
     });
+
+    /* ── Register js-beautify formatters ── */
+    const formatters = [
+      { lang: 'javascript', type: 'js' },
+      { lang: 'typescript', type: 'js' },
+      { lang: 'html', type: 'html' },
+      { lang: 'css', type: 'css' },
+      { lang: 'json', type: 'js' },
+    ];
+
+    formatters.forEach(({ lang, type }) => {
+      monaco.languages.registerDocumentFormattingEditProvider(lang, {
+        provideDocumentFormattingEdits(model) {
+          const text = model.getValue();
+          let formatted;
+          const options = {
+            indent_size: 2,
+            indent_char: ' ',
+            max_preserve_newlines: 2,
+            preserve_newlines: true,
+            keep_array_indentation: false,
+            break_chained_methods: false,
+            indent_scripts: 'normal',
+            brace_style: 'collapse',
+            space_before_conditional: true,
+            unescape_strings: false,
+            jslint_happy: false,
+            end_with_newline: false,
+            wrap_line_length: 0,
+            indent_inner_html: false,
+            comma_first: false,
+            e4x: true,
+            indent_empty_lines: false
+          };
+
+          try {
+            if (type === 'js') formatted = beautify.js(text, options);
+            else if (type === 'html') formatted = beautify.html(text, options);
+            else if (type === 'css') formatted = beautify.css(text, options);
+            else formatted = beautify(text, options);
+
+            return [{
+              range: model.getFullModelRange(),
+              text: formatted,
+            }];
+          } catch (e) {
+            console.error('Formatting failed:', e);
+            return [];
+          }
+        },
+      });
+    });
   }, []);
 
   /** Mount: cursor tracking + context menu actions */
   const handleEditorMount = useCallback(
     (editor, monaco) => {
       editorRef.current = editor;
+      setMounted(true);
       if (!onCursorChange) return;
 
       // Fire initial position
