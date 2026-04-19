@@ -1,30 +1,20 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getLanguageFromExtension } from '../utils/languages';
 
-const KEYS = {
-  FILES: 'codePad_files',
-  TABS: 'codePad_openTabs',
-  ACTIVE: 'codePad_activeFile',
-  FOLDERS: 'codePad_folders',
+const getPathPrefix = () => {
+  const p = window.location.pathname.substring(1).replace(/\/$/, '') || 'root';
+  return p;
 };
 
-const DEFAULT_FILES = {
-  'main.py': {
-    content:
-      '# Welcome to CodePad!\n# Write your Python code here and click Run.\n\nprint("Hello, World!")\n',
-    language: 'python',
-  },
-  'arithmetic.py': {
-    content:
-      'a = int(input("Enter Number 1: "))\nb = int(input("Enter Number 2: "))\n\nsum_result = a + b\ndiff_result = a - b\nprod_result = a * b\n\nprint(f"Sum: {sum_result}")\nprint(f"Difference: {diff_result}")\nprint(f"Product: {prod_result}")\n',
-    language: 'python',
-  },
-  'greeting.js': {
-    content:
-      '// JavaScript greeting example\n\nfunction greet(name) {\n  return `Hello, ${name}! Welcome to CodePad.`;\n}\n\nconsole.log(greet("World"));\n',
-    language: 'javascript',
-  },
+const PREFIX = getPathPrefix();
+const KEYS = {
+  FILES: `codePad_files_${PREFIX}`,
+  TABS: `codePad_openTabs_${PREFIX}`,
+  ACTIVE: `codePad_activeFile_${PREFIX}`,
+  FOLDERS: `codePad_folders_${PREFIX}`,
 };
+
+const DEFAULT_FILES = {};
 
 function load(key, fallback) {
   try {
@@ -58,7 +48,7 @@ export function useFileSystem() {
     const saved = load(KEYS.ACTIVE, null);
     if (saved) return saved;
     const all = Object.keys(load(KEYS.FILES, DEFAULT_FILES));
-    return all[0] || '';
+    return all[0] || null;
   });
 
   const [showSaved, setShowSaved] = useState(false);

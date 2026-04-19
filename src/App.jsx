@@ -541,6 +541,7 @@ export default function App() {
     closeTab,
     changeFileLanguage,
     renameFile,
+    renameFolder,
   } = useFileSystem();
 
   /* ── execution ─────────────────────────────── */
@@ -701,7 +702,7 @@ export default function App() {
 
   /* ── URL Bootstrapping ───────────────────────── */
   useEffect(() => {
-    const path = window.location.pathname.substring(1); // remove leading slash
+    const path = window.location.pathname.substring(1).replace(/\/$/, ''); 
     if (path) {
       const template = LANGUAGE_TEMPLATES.find(t => t.id === path);
       if (template) {
