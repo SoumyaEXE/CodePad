@@ -2,6 +2,11 @@ import React, { useCallback, useImperativeHandle, forwardRef, useRef, useState }
 import { Box, Typography } from '@mui/material';
 import Editor from '@monaco-editor/react';
 import beautify from 'js-beautify';
+import prettier from 'prettier/standalone';
+import * as babelPlugin from 'prettier/plugins/babel';
+import * as estreePlugin from 'prettier/plugins/estree';
+import * as htmlPlugin from 'prettier/plugins/html';
+import * as cssPlugin from 'prettier/plugins/postcss';
 import { getMonacoLanguage } from '../utils/languages';
 
 /* ── custom themes ───────────────────────────────── */
@@ -88,9 +93,42 @@ const CodeEditor = forwardRef(({
 
     formatters.forEach(({ lang, type }) => {
       monaco.languages.registerDocumentFormattingEditProvider(lang, {
-        provideDocumentFormattingEdits(model) {
+        async provideDocumentFormattingEdits(model) {
           const text = model.getValue();
           let formatted;
+
+          // Try Prettier first
+          try {
+            const prettierConfig = {
+              parser: null,
+              plugins: [babelPlugin, estreePlugin, htmlPlugin, cssPlugin],
+              semi: true,
+              singleQuote: true,
+              tabWidth: 2,
+              trailingComma: 'es5',
+              printWidth: 80,
+            };
+
+            if (lang === 'javascript' || lang === 'typescript' || lang === 'json') {
+              prettierConfig.parser = lang === 'json' ? 'json' : 'babel';
+            } else if (lang === 'html') {
+              prettierConfig.parser = 'html';
+            } else if (lang === 'css') {
+              prettierConfig.parser = 'css';
+            }
+
+            if (prettierConfig.parser) {
+              formatted = await prettier.format(text, prettierConfig);
+              return [{
+                range: model.getFullModelRange(),
+                text: formatted,
+              }];
+            }
+          } catch (e) {
+            console.warn('Prettier formatting failed, falling back to js-beautify:', e);
+          }
+
+          // Fallback to js-beautify
           const options = {
             indent_size: 2,
             indent_char: ' ',
