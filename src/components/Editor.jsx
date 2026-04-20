@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import { Box, Fade, CircularProgress } from '@mui/material';
+import { Box, Fade, CircularProgress, Typography } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
 
 // Pure JS universal formatter — no API, no packages
@@ -228,7 +228,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   useEffect(() => {
     if (!hasOpenFile) {
       if (currentSrc !== '') setCurrentSrc('');
-      setLoading(false);
+      if (loading) setLoading(false);
       return;
     }
     const theme = darkMode ? 'dark' : 'light';
@@ -238,7 +238,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       setLoading(true);
       setCurrentSrc(newSrc);
     }
-  }, [language, darkMode, currentSrc, hasOpenFile]);
+  }, [language, darkMode, currentSrc, hasOpenFile, loading]);
 
   // Send code to OneCompiler
   useEffect(() => {
@@ -300,9 +300,9 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
           transition: 'background-color 0.3s ease',
         }}
       >
-        <Box sx={{ color: darkMode ? '#9CA3AF' : '#6B7280', fontSize: 14 }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
           Create or open a file to start coding.
-        </Box>
+        </Typography>
       </Box>
     );
   }
