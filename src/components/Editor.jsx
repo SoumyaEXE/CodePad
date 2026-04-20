@@ -92,6 +92,8 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   const iframeRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastCodeRef = useRef(code);
+  const codeVersionRef = useRef(0);
+  const pollRequestRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [currentSrc, setCurrentSrc] = useState('');
   const fireConfetti = useConfetti();
@@ -152,6 +154,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   // Update lastCodeRef when the 'code' prop changes from external sources
   useEffect(() => {
     if (code !== lastCodeRef.current) {
+      codeVersionRef.current += 1;
       lastCodeRef.current = code;
       localStorage.setItem("codePad_code", code);
     }
@@ -175,11 +178,26 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
           }
 
           // Handle code changes for auto-save
-          const isCodeUpdate = (data.eventType === 'codeChange' || data.action === 'codeChange' || (data.files && Array.isArray(data.files)));
+          const isCodeChangeEvent = data.eventType === 'codeChange' || data.action === 'codeChange';
+          const hasCodePayload = data.files && Array.isArray(data.files);
+          const isCodeUpdate = isCodeChangeEvent || hasCodePayload;
 
           if (isCodeUpdate) {
             const newCode = data.files?.[0]?.content || data.content;
+            const pendingPoll = pollRequestRef.current;
+            const isStalePollResponse =
+              hasCodePayload &&
+              !isCodeChangeEvent &&
+              pendingPoll &&
+              pendingPoll.versionAtRequest !== codeVersionRef.current &&
+              newCode === pendingPoll.codeAtRequest;
+
+            if (isStalePollResponse) {
+              return;
+            }
+
             if (newCode !== undefined && newCode !== lastCodeRef.current) {
+              codeVersionRef.current += 1;
               lastCodeRef.current = newCode;
               localStorage.setItem("codePad_code", newCode);
 
@@ -190,6 +208,10 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
                   onChange(newCode);
                 }
               }, 100);
+            }
+
+            if (hasCodePayload) {
+              pollRequestRef.current = null;
             }
           }
         }
@@ -232,12 +254,16 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-  }, [loading, language, fileName]);
+  }, [loading, code, language, fileName]);
 
   // Polling for code changes
   useEffect(() => {
     const pollInterval = setInterval(() => {
       if (iframeRef.current && iframeRef.current.contentWindow && !loading) {
+        pollRequestRef.current = {
+          versionAtRequest: codeVersionRef.current,
+          codeAtRequest: lastCodeRef.current,
+        };
         iframeRef.current.contentWindow.postMessage({
           eventType: 'getCode'
         }, '*');
