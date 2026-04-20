@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import { Box, Fade, CircularProgress } from '@mui/material';
+import { Box, Fade, CircularProgress, Typography } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
 
 // Pure JS universal formatter — no API, no packages
@@ -97,6 +97,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   const [loading, setLoading] = useState(true);
   const [currentSrc, setCurrentSrc] = useState('');
   const fireConfetti = useConfetti();
+  const hasOpenFile = Boolean(language && fileName);
 
   // Expose formatCode & runCode to parent
   useEffect(() => {
@@ -225,6 +226,11 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
 
   // Handle theme/language/src changes
   useEffect(() => {
+    if (!hasOpenFile) {
+      if (currentSrc !== '') setCurrentSrc('');
+      if (loading) setLoading(false);
+      return;
+    }
     const theme = darkMode ? 'dark' : 'light';
     const newSrc = `https://onecompiler.com/embed/${language}?theme=${theme}&hideTitle=true&hideRun=true&listenToEvents=true&codeChangeEvent=true`;
 
@@ -232,10 +238,11 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       setLoading(true);
       setCurrentSrc(newSrc);
     }
-  }, [language, darkMode, currentSrc]);
+  }, [language, darkMode, currentSrc, hasOpenFile, loading]);
 
   // Send code to OneCompiler
   useEffect(() => {
+    if (!hasOpenFile) return;
     const sendCode = () => {
       if (iframeRef.current && iframeRef.current.contentWindow && !loading) {
         iframeRef.current.contentWindow.postMessage({
@@ -255,10 +262,11 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-  }, [loading, code, language, fileName]);
+  }, [loading, code, language, fileName, hasOpenFile]);
 
   // Polling for code changes
   useEffect(() => {
+    if (!hasOpenFile) return;
     const pollInterval = setInterval(() => {
       if (iframeRef.current && iframeRef.current.contentWindow && !loading) {
         pollRequestRef.current = {
@@ -272,13 +280,32 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
     }, 500);
 
     return () => clearInterval(pollInterval);
-  }, [loading]);
+  }, [loading, hasOpenFile]);
 
   const handleIframeLoad = () => {
     setTimeout(() => {
       setLoading(false);
     }, 500);
   };
+
+  if (!hasOpenFile) {
+    return (
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: darkMode ? '#1A1D27' : '#FFFFFF',
+          transition: 'background-color 0.3s ease',
+        }}
+      >
+        <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+          Create or open a file to start coding.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
