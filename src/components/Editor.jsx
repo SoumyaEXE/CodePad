@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Fade, CircularProgress, Typography } from '@mui/material';
 import { useConfetti } from '../hooks/useConfetti';
 
@@ -88,7 +88,17 @@ const universalFormat = (code, lang) => {
     .trimEnd() + "\n";
 };
 
-const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, onChange, formatRef, runRef }, ref) {
+const Editor = forwardRef(function Editor({
+  language,
+  code,
+  fileName,
+  activeFilePath,
+  filesMap,
+  darkMode,
+  onChange,
+  formatRef,
+  runRef,
+}, ref) {
   const iframeRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastCodeRef = useRef(code);
@@ -98,6 +108,31 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
   const [currentSrc, setCurrentSrc] = useState('');
   const fireConfetti = useConfetti();
   const hasOpenFile = Boolean(language && fileName);
+
+  const buildFilesPayload = useCallback((currentCode) => {
+    const resolvedCode = currentCode ?? '';
+    if (filesMap && Object.keys(filesMap).length > 0) {
+      const names = Object.keys(filesMap);
+      const activePath = activeFilePath || fileName;
+      const ordered = activePath && names.includes(activePath)
+        ? [activePath, ...names.filter((name) => name !== activePath)]
+        : names;
+
+      return ordered.map((name) => ({
+        name,
+        content: name === activePath
+          ? resolvedCode
+          : (filesMap[name]?.content ?? ''),
+      }));
+    }
+
+    return [
+      {
+        name: activeFilePath || fileName || 'main',
+        content: resolvedCode,
+      },
+    ];
+  }, [activeFilePath, fileName, filesMap]);
 
   // Expose formatCode & runCode to parent
   useEffect(() => {
@@ -127,12 +162,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
             iframeRef.current.contentWindow.postMessage({
               eventType: 'populateCode',
               language: language,
-              files: [
-                {
-                  name: fileName || 'main',
-                  content: formatted
-                }
-              ]
+              files: buildFilesPayload(formatted),
             }, '*');
           }
         }
@@ -150,7 +180,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
         }
       };
     }
-  }, [formatRef, runRef, code, language, fileName, onChange]);
+  }, [formatRef, runRef, code, language, fileName, onChange, filesMap, activeFilePath, buildFilesPayload]);
 
   // Update lastCodeRef when the 'code' prop changes from external sources
   useEffect(() => {
@@ -248,12 +278,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
         iframeRef.current.contentWindow.postMessage({
           eventType: 'populateCode',
           language: language,
-          files: [
-            {
-              name: fileName || 'main',
-              content: code
-            }
-          ]
+          files: buildFilesPayload(code),
         }, '*');
       }
     };
@@ -262,7 +287,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
       const timer = setTimeout(sendCode, 300);
       return () => clearTimeout(timer);
     }
-  }, [loading, code, language, fileName, hasOpenFile]);
+  }, [loading, code, language, fileName, hasOpenFile, filesMap, activeFilePath, buildFilesPayload]);
 
   // Polling for code changes
   useEffect(() => {

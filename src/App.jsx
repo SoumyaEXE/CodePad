@@ -866,7 +866,7 @@ export default function App() {
                     showOutput={showOutput}
                     onToggleOutput={() => setMobileTab('output')}
                   />
-                  {/* <CodeEditor
+                  <CodeEditor
                     value={activeContent}
                     language={activeLanguage}
                     darkMode={darkMode}
@@ -874,14 +874,6 @@ export default function App() {
                     onChange={handleContentChange}
                     onCursorChange={setCursorPos}
                     ref={editorRef}
-                  /> */}
-                  <Editor
-                    language={getLangById(activeLanguage)?.ocLang || activeLanguage}
-                    code={activeContent}
-                    fileName={activeFile ? activeFile.split('/').pop() : ''}
-                    darkMode={darkMode}
-                    onChange={handleContentChange}
-                    formatRef={formatRef}
                   />
                 </Box>
               )}
@@ -984,7 +976,7 @@ export default function App() {
 
                 <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0, overflow: 'hidden' }}>
-                    {/* <CodeEditor
+                    <CodeEditor
                       value={activeContent}
                       language={activeLanguage}
                       darkMode={darkMode}
@@ -992,15 +984,6 @@ export default function App() {
                       onChange={handleContentChange}
                       onCursorChange={setCursorPos}
                       ref={editorRef}
-                    /> */}
-                    <Editor
-                      language={getLangById(activeLanguage)?.ocLang || activeLanguage}
-                      code={activeContent}
-                      fileName={activeFile ? activeFile.split('/').pop() : ''}
-                      darkMode={darkMode}
-                      onChange={handleContentChange}
-                      formatRef={formatRef}
-                      runRef={runRef}
                     />
                   </Box>
 
@@ -1065,6 +1048,21 @@ export default function App() {
             />
           </>
         )}
+      </Box>
+
+      {/* Hidden OneCompiler bridge: keeps Run/Format working while Monaco is visible editor */}
+      <Box aria-hidden="true" sx={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
+        <Editor
+          language={getLangById(activeLanguage)?.ocLang || activeLanguage}
+          code={activeContent}
+          fileName={activeFile ? activeFile.split('/').pop() : ''}
+          activeFilePath={activeFile || ''}
+          filesMap={files}
+          darkMode={darkMode}
+          onChange={handleContentChange}
+          formatRef={formatRef}
+          runRef={runRef}
+        />
       </Box>
 
       {/* Language selector modal */}
