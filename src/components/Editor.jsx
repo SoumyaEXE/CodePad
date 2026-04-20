@@ -109,7 +109,8 @@ const Editor = forwardRef(function Editor({
   const fireConfetti = useConfetti();
   const hasOpenFile = Boolean(language && fileName);
 
-  const buildFilesPayload = useCallback((currentCode = code) => {
+  const buildFilesPayload = useCallback((currentCode) => {
+    const resolvedCode = currentCode ?? '';
     if (filesMap && Object.keys(filesMap).length > 0) {
       const names = Object.keys(filesMap);
       const activePath = activeFilePath || fileName;
@@ -120,7 +121,7 @@ const Editor = forwardRef(function Editor({
       return ordered.map((name) => ({
         name,
         content: name === activePath
-          ? (currentCode ?? '')
+          ? resolvedCode
           : (filesMap[name]?.content ?? ''),
       }));
     }
@@ -128,10 +129,10 @@ const Editor = forwardRef(function Editor({
     return [
       {
         name: activeFilePath || fileName || 'main',
-        content: currentCode ?? '',
+        content: resolvedCode,
       },
     ];
-  }, [activeFilePath, code, fileName, filesMap]);
+  }, [activeFilePath, fileName, filesMap]);
 
   // Expose formatCode & runCode to parent
   useEffect(() => {

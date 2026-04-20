@@ -1051,7 +1051,7 @@ export default function App() {
       </Box>
 
       {/* Hidden OneCompiler bridge: keeps Run/Format working while Monaco is visible editor */}
-      <Box sx={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
+      <Box aria-hidden="true" sx={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }}>
         <Editor
           language={getLangById(activeLanguage)?.ocLang || activeLanguage}
           code={activeContent}
