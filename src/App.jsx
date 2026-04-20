@@ -1055,7 +1055,7 @@ export default function App() {
         <Editor
           language={getLangById(activeLanguage)?.ocLang || activeLanguage}
           code={activeContent}
-          fileName={activeFile || ''}
+          fileName={activeFile ? activeFile.split('/').pop() : ''}
           activeFilePath={activeFile || ''}
           filesMap={files}
           darkMode={darkMode}
