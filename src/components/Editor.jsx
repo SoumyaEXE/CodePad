@@ -185,6 +185,7 @@ const Editor = forwardRef(function Editor({ language, code, fileName, darkMode, 
           if (isCodeUpdate) {
             const newCode = data.files?.[0]?.content || data.content;
             const pendingPoll = pollRequestRef.current;
+            // Ignore delayed poll snapshots that would roll back a newer local edit.
             const isStalePollResponse =
               hasCodePayload &&
               !isCodeChangeEvent &&
